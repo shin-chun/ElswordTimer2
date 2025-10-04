@@ -1,16 +1,21 @@
 import time
 from enum import Enum, auto
 from dataclasses import dataclass
+
+
 @dataclass
 class Keys:
     first_key: str
     second_key: str
     third_key: str
+
+
 class TimerState(Enum):
     IDLE = "idle"
-    SELECT ="select"
+    SELECT = "select"
     LOCK = "locked"
     ACTIVE = "running"
+
 
 class TimerCore:
     def __init__(self, name, keys: Keys, cooldown, callback=None):
@@ -53,16 +58,17 @@ class TimerCore:
         if self.debug_mode:
             print(f"[DEBUG] {msg}")
 
-trigger = TimerCore(
-    name='test_trigger',
-    keys=Keys('a','b', 'c'),
-    # second_keys=[['a', 'e', 'f'], ['a', 'e', 'g']],
-    cooldown=5,
-    callback=callback
-)
-# print(trigger.keys, type(trigger.keys))
-core_a = ['a', 'b', 'e', 'c', 'f', 'a']
-for k in core_a:
-    print(f'現在輸入：{k}', type(k))
-    trigger.check_key(k)
-    time.sleep(0.5)
+
+# trigger = TimerCore(
+#     name='test_trigger',
+#     keys=Keys('a','b', 'c'),
+#     # second_keys=[['a', 'e', 'f'], ['a', 'e', 'g']],
+#     cooldown=5,
+#     callback=callback
+# )
+# # print(trigger.keys, type(trigger.keys))
+# core_a = ['a', 'b', 'e', 'c', 'f', 'a']
+# for k in core_a:
+#     print(f'現在輸入：{k}', type(k))
+#     trigger.check_key(k)
+#     time.sleep(0.5)

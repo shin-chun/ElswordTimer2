@@ -1,9 +1,4 @@
-from PySide6.QtWidgets import (
-    QWidget, QPushButton, QListWidget, QLabel,
-    QVBoxLayout, QGridLayout, QHBoxLayout, QSizePolicy
-)
-from PySide6.QtGui import QFont
-from PySide6.QtCore import Qt
+from gui.common import *
 
 
 class MainWindow(QWidget):
@@ -52,6 +47,14 @@ class MainWindow(QWidget):
             self.buttons.append(btn)
             grid_layout.addWidget(btn, i // 3, i % 3)
 
+        # 按鈕功能綁定
+        self.buttons[0].clicked.connect(ButtonManager.create_edit_window)
+        # self.buttons[1].clicked.connect(ButtonManager.edit_timer)
+        # self.buttons[2].clicked.connect(ButtonManager.save_file)
+        # self.buttons[3].clicked.connect(ButtonManager.delete_timer)
+        # self.buttons[4].clicked.connect(ButtonManager.reset_timer)
+        # self.buttons[5].clicked.connect(ButtonManager.import_config)
+
         # List widget
         self.list_widget = QListWidget()
         self.list_widget.setFont(font)
@@ -81,3 +84,4 @@ class MainWindow(QWidget):
         main_layout.addWidget(self.label)
 
         self.setLayout(main_layout)
+

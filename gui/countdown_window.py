@@ -2,6 +2,7 @@ from PySide6.QtWidgets import (QApplication, QWidget, QLabel, QListWidget,
                                QVBoxLayout, QPushButton, QHBoxLayout, )
 from PySide6.QtCore import QTimer, Qt
 
+
 class CountdownWindow(QWidget):
     def __init__(self):
         super().__init__()

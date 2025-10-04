@@ -24,5 +24,3 @@ def handle_click(ui, index):
 
 if __name__ == "__main__":
     main()
-
-
