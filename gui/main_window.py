@@ -5,16 +5,17 @@ from PySide6.QtWidgets import (
 from PySide6.QtGui import QFont
 from PySide6.QtCore import Qt
 
+
 class MainWindow(QWidget):
     def __init__(self):
         super().__init__()
-        self.setWindowTitle("分離式 UI")
+        self.setWindowTitle("ElswordTimer")
         self.setGeometry(100, 100, 600, 450)
         self.setStyleSheet("""
             QWidget { background-color: #f0f4f8; }
             QPushButton {
-                background-color: #4a90e2;
-                color: white;
+                background-color: #E0E0E0;
+                color: black;
                 border: none;
                 border-radius: 6px;
                 font-size: 14px;
@@ -37,14 +38,17 @@ class MainWindow(QWidget):
 
         font = QFont()
         font.setPointSize(14)
+        font.setBold(True)
 
         # GridLayout for Button1–Button6
         grid_layout = QGridLayout()
         self.buttons = []
+        buttons_labels = ['新增計時器', '編輯計時器', '儲存檔案', '刪除計時器', '重置計時器',
+                          '匯入設定檔']
         for i in range(6):
-            btn = QPushButton(f"Button{i+1}")
+            btn = QPushButton(buttons_labels[i])
             btn.setFont(font)
-            btn.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
+            btn.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
             self.buttons.append(btn)
             grid_layout.addWidget(btn, i // 3, i % 3)
 
@@ -53,9 +57,9 @@ class MainWindow(QWidget):
         self.list_widget.setFont(font)
 
         # Bottom Button7
-        self.bottom_button = QPushButton("Button7")
+        self.bottom_button = QPushButton("啟動計時器")
         self.bottom_button.setFont(font)
-        self.bottom_button.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Fixed)
+        self.bottom_button.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
 
         bottom_button_layout = QHBoxLayout()
         bottom_button_layout.addStretch()
@@ -65,7 +69,7 @@ class MainWindow(QWidget):
         # Label
         self.label = QLabel("請點選按鈕")
         self.label.setFont(font)
-        self.label.setAlignment(Qt.AlignCenter)
+        self.label.setAlignment(Qt.AlignmentFlag.AlignCenter)
 
         # Main layout
         main_layout = QVBoxLayout()

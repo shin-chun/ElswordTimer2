@@ -1,7 +1,7 @@
 import time
 
 # from timer.test_timer import second_keys
-@statistics
+# statistics
 
 class TriggerTimer:
     def __init__(self, name, keys, second_keys, window, cooldown, strick=None):
