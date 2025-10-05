@@ -1,5 +1,47 @@
-from timer.core import TimerCore
 from gui.edit_window import EditWindow
+from gui.common import *
+from timer.core import TimerCore
+
+# EditWindow管理區
+
+
+
+class EditWindowManager:
+    def __init__(self, SCAN_CODE_MAP):
+        self.recording_index = None
+        self.key_labels = []
+        self.SCAN_CODE_MAP = {
+            29: "Left Ctrl",
+            285: "Right Ctrl",
+            42: "Left Shift",
+            54: "Right Shift",
+            56: "Left Alt",
+            312: "Right Alt",
+            # 可依需要補上更多鍵
+        }
+
+
+    def start_recording(self, index):
+        self.recording_index = index
+        self.key_labels[index].setText("等待按鍵...")
+
+    def clear_key(self, index):
+        self.key_labels[index].setText("None")
+        if self.recording_index == index:
+            self.recording_index = None
+
+    def keyPressEvent(self, event):
+        if self.recording_index is None:
+            return
+
+        scan_code = event.nativeScanCode()
+        key_name = SCAN_CODE_MAP.get(scan_code)
+
+        if not key_name:
+            key_name = event.text().upper() or Qt.Key(event.key()).name.replace("Key_", "")
+
+        self.key_labels[self.recording_index].setText(key_name)
+        self.recording_index = None
 
 
 class ButtonManager:
