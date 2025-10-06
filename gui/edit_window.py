@@ -1,8 +1,12 @@
 from settings.common import *
-from settings.scan_code_resolver import *
+from timer.manager import EditWindowManager
+from functools import partial
 
 
-SCAN_CODE_MAP = load_scan_code_map()
+# from settings.scan_code_resolver import *
+
+
+# SCAN_CODE_MAP = load_scan_code_map()
 
 
 class EditWindow(QDialog):
@@ -10,17 +14,47 @@ class EditWindow(QDialog):
         super().__init__(parent)
         self.installEventFilter(self)
         self.setWindowTitle(title)
-        self.setMinimumSize(600, 200)  # 調整視窗大小以容納 6x4 格線
+        self.setMinimumSize(600, 300)  # 調整視窗大小以容納 6x4 格線
 
         self.recording_index = None
         self.key_labels = []
-
         layout = QVBoxLayout()
         grid = QGridLayout()
+        self.manager = EditWindowManager(
+            record_factory=self.record_key,
+            label_updater=self.update_label
+        )
+
+        # 事件名稱填寫區塊（最左側第 0 欄，佔 4 行）
+        event_font = QFont()
+        event_font.setBold(True)
+        event_font.setPointSize(14)
+
+        # 標籤：事件名稱
+        event_title = QLabel("事件名稱")
+        event_title.setFont(event_font)
+        event_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        event_title.setFrameShape(QFrame.Shape.Box)
+        grid.addWidget(event_title, 0, 0)
+
+        # 三個輸入欄位
+        self.event_name_inputs = []
+
+        input_field = QLineEdit()
+        input_field.setFont(event_font)
+        input_field.setAlignment(Qt.AlignmentFlag.AlignCenter)
+        input_field.setPlaceholderText(f"請輸入事件名稱")
+        input_field.setStyleSheet("border: 1px solid gray;")
+        grid.addWidget(input_field, 1, 0)  # 第 1 列，第 0 欄
+        self.event_name_inputs.append(input_field)
+
+
+        # 按鈕UI區塊
         record_btn_label = ['選擇鍵', '鎖定鍵', '觸發鍵', '選擇鍵2', '鎖定鍵2', '觸發鍵2']
 
+
         for i in range(6):
-            col = i % 3 * 2  # 每組佔 2 欄（按鈕 + label/清除）
+            col = i % 3 * 2 + 2 # 每組佔 2 欄（按鈕 + label/清除）
             row_base = i // 3 * 2  # 每組佔 2 行
 
             # 錄製按鈕：佔 2 行 × 1 欄
@@ -39,90 +73,95 @@ class EditWindow(QDialog):
             clear_btn.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
             grid.addWidget(clear_btn, row_base + 1, col + 1)
 
-            record_btn.clicked.connect(lambda _, idx=i: self.start_recording(idx))
-            clear_btn.clicked.connect(lambda _, idx=i: self.clear_key(idx))
+            record_btn.clicked.connect(partial(self.manager.start_recording, i))
+            clear_btn.clicked.connect(partial(self.manager.clear_key, i))
 
             self.key_labels.append(label)
 
         layout.addLayout(grid)
         self.setLayout(layout)
 
-    def start_recording(self, index):
-        self.recording_index = index
-        self.key_labels[index].setText("等待按鍵...")
-        self.setFocus()  # 確保 keyPressEvent 可觸發
+        # 確認及取消按鈕區塊
+        btn_layout = QHBoxLayout()
+        btn_layout.addStretch()
 
-    def clear_key(self, index):
-        self.key_labels[index].setText("None")
-        if self.recording_index == index:
-            self.recording_index = None
+        confirm_btn = QPushButton("確認")
+        confirm_btn.setFixedSize(100, 50)
+        confirm_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #D0D0D0;  /* 綠色 */
+                color: black;
+                border-radius: 6px;
+                font-size: 14px;
+            }
+            QPushButton:hover {
+                background-color: #2196F3;  /* 滑鼠懸停時的顏色 */
+            }
+        """)
 
-    SCAN_CODE_MAP = load_scan_code_map()
+        cancel_btn = QPushButton("取消")
+        cancel_btn.setFixedSize(100, 50)
+        cancel_btn.setStyleSheet("""
+            QPushButton {
+                background-color: #D0D0D0;  /* 綠色 */
+                color: black;
+                border-radius: 6px;
+                font-size: 14px;
+            }
+            QPushButton:hover {
+                background-color: #2196F3;  /* 滑鼠懸停時的顏色 */
+            }
+        """)
 
-    def keyPressEvent(self, event):
-        if self.recording_index is None:
-            return
-        scan_code = event.nativeScanCode()
-        qt_key = event.key()
+        confirm_btn.clicked.connect(self.accept)
+        cancel_btn.clicked.connect(self.reject)
 
-        if scan_code not in SCAN_CODE_MAP:
-            key_name = QKeySequence(qt_key).toString() or f"Key({qt_key})"
-            SCAN_CODE_MAP[scan_code] = key_name
-            save_scan_code_map(SCAN_CODE_MAP)
-            print(f"📝 新增掃描碼：{scan_code} → {key_name}")
-        else:
-            key_name = SCAN_CODE_MAP[scan_code]
-            print(f"🔁 已存在掃描碼：{scan_code} → {key_name}")
+        btn_layout.addWidget(confirm_btn)
+        btn_layout.addWidget(cancel_btn)
+        btn_layout.addStretch()
 
-        if not key_name:
-            key_name = QKeySequence(qt_key).toString() or f"Key({qt_key})"
-            SCAN_CODE_MAP[scan_code] = key_name
-            save_scan_code_map(SCAN_CODE_MAP)
-            print(f"📝 自動記錄：{scan_code} → {key_name}")
+        layout.addLayout(btn_layout)
 
-        self.key_labels[self.recording_index].setText(key_name)
-        self.recording_index = None
+    def record_key(self, index):
+        # 模擬鍵名（你可以改成實際錄製邏輯）
+        return f"Key{index}"
 
-    # def keyPressEvent(self, event: QKeyEvent):
-    #     if self.recording_index is None:
-    #         return
-    #
-    #     scan_code = event.nativeScanCode()
-    #     qt_key = event.key()
-    #     text = event.text()
-    #
-    #     # 優先使用 SCAN_CODE_MAP
-    #     key_name = SCAN_CODE_MAP.get(scan_code)
-    #
-    #     # 特殊鍵處理（例如 TAB）
-    #     if not key_name:
-    #         if qt_key == Qt.Key_Tab:
-    #             key_name = "Tab"
-    #         elif qt_key == Qt.Key_Return:
-    #             key_name = "Enter"
-    #         elif qt_key == Qt.Key_Escape:
-    #             key_name = "Esc"
-    #         elif qt_key == Qt.Key_Space:
-    #             key_name = "Space"
-    #         else:
-    #             # fallback：使用 Qt 的 key name 或 QKeySequence
-    #             key_name = QKeySequence(qt_key).toString() or f"Key({qt_key})"
-    #
-    #         # 自動補充映射表（可選）
-    #         SCAN_CODE_MAP[scan_code] = key_name
-    #         print(f"📝 已記錄新掃描碼：{scan_code} → {key_name}")
-    #
-    #     # 更新 UI
-    #     self.key_labels[self.recording_index].setText(key_name)
-    #     print(f"✅ 錄製完成：index={self.recording_index}, key={key_name}")
-    #     self.recording_index = None
+    def update_label(self, index, key_name):
+        self.key_labels[index].setText(key_name)
 
-    def eventFilter(self, obj, event):
-        if event.type() == QEvent.Type.KeyPress:
-            if event.key() == Qt.Key.Key_Tab and self.recording_index is not None:
-                scan_code = event.nativeScanCode()
-                key_name = SCAN_CODE_MAP.get(scan_code, "Tab")
-                self.key_labels[self.recording_index].setText(key_name)
-                self.recording_index = None
-                return True  # 阻止 Qt 處理 TAB
-        return super().eventFilter(obj, event)
+
+
+# def keyPressEvent(self, event: QKeyEvent):
+#     if self.recording_index is None:
+#         return
+#
+#     scan_code = event.nativeScanCode()
+#     qt_key = event.key()
+#     text = event.text()
+#
+#     # 優先使用 SCAN_CODE_MAP
+#     key_name = SCAN_CODE_MAP.get(scan_code)
+#
+#     # 特殊鍵處理（例如 TAB）
+#     if not key_name:
+#         if qt_key == Qt.Key_Tab:
+#             key_name = "Tab"
+#         elif qt_key == Qt.Key_Return:
+#             key_name = "Enter"
+#         elif qt_key == Qt.Key_Escape:
+#             key_name = "Esc"
+#         elif qt_key == Qt.Key_Space:
+#             key_name = "Space"
+#         else:
+#             # fallback：使用 Qt 的 key name 或 QKeySequence
+#             key_name = QKeySequence(qt_key).toString() or f"Key({qt_key})"
+#
+#         # 自動補充映射表（可選）
+#         SCAN_CODE_MAP[scan_code] = key_name
+#         print(f"📝 已記錄新掃描碼：{scan_code} → {key_name}")
+#
+#     # 更新 UI
+#     self.key_labels[self.recording_index].setText(key_name)
+#     print(f"✅ 錄製完成：index={self.recording_index}, key={key_name}")
+#     self.recording_index = None
+

@@ -1,4 +1,5 @@
 from settings.common import *
+from timer.manager import MainWindowManager
 from gui.edit_window import EditWindow
 
 
@@ -7,6 +8,7 @@ class MainWindow(QWidget):
         super().__init__()
         self.setWindowTitle("ElswordTimer")
         self.setGeometry(100, 100, 600, 450)
+        self.manager = MainWindowManager(lambda: EditWindow())
         self.setStyleSheet("""
             QWidget { background-color: #f0f4f8; }
             QPushButton {
@@ -49,7 +51,7 @@ class MainWindow(QWidget):
             grid_layout.addWidget(btn, i // 3, i % 3)
 
         # 按鈕功能綁定
-        self.buttons[0].clicked.connect(self.create_edit_window)
+        self.buttons[0].clicked.connect(self.manager.open_edit_window)
         # self.buttons[1].clicked.connect(self.edit_timer)
         # self.buttons[2].clicked.connect(self.save_file)
         # self.buttons[3].clicked.connect(self.delete_timer)
@@ -86,30 +88,6 @@ class MainWindow(QWidget):
 
         self.setLayout(main_layout)
 
-    def create_edit_window(self):
-        dialog = EditWindow()
-        if dialog.exec():
-            timer_name = dialog.name_input.text()
-            print(f"新增的計時器名稱：{timer_name}")
-
-    # def edit_timer(self, name, keys, cooldown, callback=None):
-    #     timer = TimerCore(name=name, keys=keys, cooldown=cooldown, callback=callback)  # ✅ 關鍵
-    #     print('pass')
-    #
-    # def save_file(self):
-    #     print('pass')
-    #
-    # def delete_timer(self):
-    #     print('pass')
-    #
-    # def reset_timer(self):
-    #     print('pass')
-    #
-    # def import_config(self):
-    #     print('pass')
-    #
-    # def input_key(self, key):
-    #     print(f"🧩 TimerManager 收到鍵：{key}")
-    #     for timer in self.timers:
-    #         timer.input(key)
-
+    def handle_create_timer(self):
+        name = self.manager.open_edit_window()
+        print(f"使用者輸入：{name}")
