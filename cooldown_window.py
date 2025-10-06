@@ -1,4 +1,4 @@
-from gui.common import QWidget, Qt, QLabel, QFont
+from settings.common import QWidget, Qt, QLabel, QFont
 
 class CountdownWindow(QWidget):
     def __init__(self, duration_sec=10):
