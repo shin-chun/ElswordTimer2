@@ -34,53 +34,44 @@ class MainWindowManager:
 
 
 class EditWindowManager:
-    def __init__(self, record_factory, label_updater):
-        """
-        record_factory: Callable[[int], str] → 根據 index 錄製並回傳鍵名
-        label_updater: Callable[[int, str]] → 根據 index 更新 UI label
-        """
-        self.record_factory = record_factory
+    def __init__(self, key_labels, label_updater):
+        self.key_labels = key_labels
         self.label_updater = label_updater
+        self.recording_index = None
 
-    def start_recording(self, index):
-        key_name = self.record_factory(index)
-        self.label_updater(index, key_name)
+    def keyPressEvent(self, event):
+        if self.recording_index is None:
+            return
+        scan_code = event.nativeScanCode()
+        qt_key = event.key()
+
+        if scan_code not in SCAN_CODE_MAP:
+            key_name = QKeySequence(qt_key).toString() or f"Key({qt_key})"
+            SCAN_CODE_MAP[scan_code] = key_name
+            save_scan_code_map(SCAN_CODE_MAP)
+            print(f"📝 新增掃描碼：{scan_code} → {key_name}")
+        else:
+            key_name = SCAN_CODE_MAP[scan_code]
+            print(f"🔁 已存在掃描碼：{scan_code} → {key_name}")
+
+        if not key_name:
+            key_name = QKeySequence(qt_key).toString() or f"Key({qt_key})"
+            SCAN_CODE_MAP[scan_code] = key_name
+            save_scan_code_map(SCAN_CODE_MAP)
+            print(f"📝 自動記錄：{scan_code} → {key_name}")
+
+        self.key_labels[self.recording_index].setText(key_name)
+        self.recording_index = None
+
+    def eventFilter(self, obj, event):
+        if event.type() == QEvent.Type.KeyPress:
+            if event.key() == Qt.Key.Key_Tab and self.recording_index is not None:
+                scan_code = event.nativeScanCode()
+                key_name = SCAN_CODE_MAP.get(scan_code, "Tab")
+                self.key_labels[self.recording_index].setText(key_name)
+                self.recording_index = None
+                return True  # 阻止 Qt 處理 TAB
+        return super().eventFilter(obj, event)
 
     def clear_key(self, index):
         self.label_updater(index, "None")
-
-    SCAN_CODE_MAP = load_scan_code_map()
-
-    # def keyPressEvent(self, event):
-    #     if self.recording_index is None:
-    #         return
-    #     scan_code = event.nativeScanCode()
-    #     qt_key = event.key()
-    #
-    #     if scan_code not in SCAN_CODE_MAP:
-    #         key_name = QKeySequence(qt_key).toString() or f"Key({qt_key})"
-    #         SCAN_CODE_MAP[scan_code] = key_name
-    #         save_scan_code_map(SCAN_CODE_MAP)
-    #         print(f"📝 新增掃描碼：{scan_code} → {key_name}")
-    #     else:
-    #         key_name = SCAN_CODE_MAP[scan_code]
-    #         print(f"🔁 已存在掃描碼：{scan_code} → {key_name}")
-    #
-    #     if not key_name:
-    #         key_name = QKeySequence(qt_key).toString() or f"Key({qt_key})"
-    #         SCAN_CODE_MAP[scan_code] = key_name
-    #         save_scan_code_map(SCAN_CODE_MAP)
-    #         print(f"📝 自動記錄：{scan_code} → {key_name}")
-    #
-    #     self.key_labels[self.recording_index].setText(key_name)
-    #     self.recording_index = None
-
-    # def eventFilter(self, obj, event):
-    #     if event.type() == QEvent.Type.KeyPress:
-    #         if event.key() == Qt.Key.Key_Tab and self.recording_index is not None:
-    #             scan_code = event.nativeScanCode()
-    #             key_name = SCAN_CODE_MAP.get(scan_code, "Tab")
-    #             self.key_labels[self.recording_index].setText(key_name)
-    #             self.recording_index = None
-    #             return True  # 阻止 Qt 處理 TAB
-    #     return super().eventFilter(obj, event)

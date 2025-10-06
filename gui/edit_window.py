@@ -21,7 +21,7 @@ class EditWindow(QDialog):
         layout = QVBoxLayout()
         grid = QGridLayout()
         self.manager = EditWindowManager(
-            record_factory=self.record_key,
+            key_labels=self.key_labels,
             label_updater=self.update_label
         )
 
@@ -48,10 +48,8 @@ class EditWindow(QDialog):
         grid.addWidget(input_field, 1, 0)  # 第 1 列，第 0 欄
         self.event_name_inputs.append(input_field)
 
-
         # 按鈕UI區塊
         record_btn_label = ['選擇鍵', '鎖定鍵', '觸發鍵', '選擇鍵2', '鎖定鍵2', '觸發鍵2']
-
 
         for i in range(6):
             col = i % 3 * 2 + 2 # 每組佔 2 欄（按鈕 + label/清除）
@@ -73,7 +71,7 @@ class EditWindow(QDialog):
             clear_btn.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
             grid.addWidget(clear_btn, row_base + 1, col + 1)
 
-            record_btn.clicked.connect(partial(self.manager.start_recording, i))
+            record_btn.clicked.connect(partial(self.manager.keyPressEvent, i))
             clear_btn.clicked.connect(partial(self.manager.clear_key, i))
 
             self.key_labels.append(label)
@@ -122,9 +120,8 @@ class EditWindow(QDialog):
 
         layout.addLayout(btn_layout)
 
-    def record_key(self, index):
-        # 模擬鍵名（你可以改成實際錄製邏輯）
-        return f"Key{index}"
+    def key_label(self, key_labels):
+        self.key_labels =
 
     def update_label(self, index, key_name):
         self.key_labels[index].setText(key_name)
