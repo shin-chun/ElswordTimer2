@@ -9,6 +9,12 @@ class Keys:
     second_key: str
     third_key: str
 
+@dataclass
+class Keys2:
+    first_key: str
+    second_key: str
+    third_key: str
+
 
 class TimerState(Enum):
     IDLE = "idle"
@@ -18,43 +24,48 @@ class TimerState(Enum):
 
 
 class TimerCore:
-    def __init__(self, name, keys: Keys, cooldown, callback=None):
+    def __init__(self, name, keys: Keys, keys2: Keys2, cooldown, callback=None):
+        self.debug_mode = None
         self.name = name
         self.keys = keys
+        self.keys2 = keys2
         self.cooldown = cooldown
         self.callback = callback
         self.state = TimerState.IDLE
+        self.last_times = [None]
 
     def check_key(self, key):
         now = time.time()
-
-        if self.keys.third_key == key and not self.keys.first_key and not self.keys.second_key:
-            self.state = TimerState.ACTIVE
-            self.trigger(self.cooldown)
-            return
-
-        if key == self.keys.first_key:
-            self.state = TimerState.SELECT
-
-        elif self.state == TimerState.SELECT and key == self.keys.second_key:
-            self.state = TimerState.LOCK
-
-        elif self.state == TimerState.LOCK and key == self.keys.third_key:
+        if self.match_sequence(self.keys, key) or self.match_sequence(self.keys2, key):
             self.state = TimerState.ACTIVE
             self.trigger(self.cooldown)
 
         # print(seq['keys'], type(seq['keys']))
+
+    def match_sequence(self, keys_obj, key):
+        if keys_obj.third_key == key and not keys_obj.first_key and not keys_obj.second_key:
+            return True
+
+        if key == keys_obj.first_key:
+            self.state = TimerState.SELECT
+        elif self.state == TimerState.SELECT and key == keys_obj.second_key:
+            self.state = TimerState.LOCK
+        elif self.state == TimerState.LOCK and key == keys_obj.third_key:
+            return True
+
+        return False
 
     def trigger(self, cooldown):
         print(f"🚀 觸發技能：{self.name}，倒數 {cooldown} 秒")
         if self.callback:
             self.callback(self.name, cooldown)
 
-    def reset(self, i):
-        self.states[i] = 0
-        self.last_times[i] = None
+    def reset(self):
+        self.state = TimerState.IDLE
+        self.last_times[0] = None
 
     def debug(self, msg):
+        self.debug_mode = False
         if self.debug_mode:
             print(f"[DEBUG] {msg}")
 
@@ -62,13 +73,14 @@ class TimerCore:
 # trigger = TimerCore(
 #     name='test_trigger',
 #     keys=Keys('a','b', 'c'),
+#     keys2=Keys2('a', 'b', 'd'),
 #     # second_keys=[['a', 'e', 'f'], ['a', 'e', 'g']],
-#     cooldown=5,
-#     callback=callback
+#     cooldown=5
 # )
-# # print(trigger.keys, type(trigger.keys))
-# core_a = ['a', 'b', 'e', 'c', 'f', 'a']
+# # # print(trigger.keys, type(trigger.keys))
+# core_a = [ 'a', 'b', 'c', 'd']
 # for k in core_a:
-#     print(f'現在輸入：{k}', type(k))
+#     print(f'現在輸入：{k}')
 #     trigger.check_key(k)
+#     print(f'目前狀態：{trigger.state}')
 #     time.sleep(0.5)

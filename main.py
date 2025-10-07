@@ -1,6 +1,8 @@
 import sys
 from PySide6.QtWidgets import QApplication
 from gui.main_window import MainWindow
+from gui.edit_window import EditWindow  # ✅ 加上這行
+from timer.manager import MainWindowManager
 
 
 def main():

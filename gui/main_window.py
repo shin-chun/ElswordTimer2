@@ -8,6 +8,7 @@ class MainWindow(QWidget):
         super().__init__()
         self.setWindowTitle("ElswordTimer")
         self.setGeometry(100, 100, 600, 450)
+        self.timer_running = False  # 初始狀態：未啟動
 
         self.setStyleSheet("""
             QWidget { background-color: #f0f4f8; }
@@ -53,28 +54,32 @@ class MainWindow(QWidget):
         # List widget
         self.list_widget = QListWidget()
         self.list_widget.setFont(font)
+
         self.manager = MainWindowManager(lambda: EditWindow(),
-                                         event_list_widget=self.list_widget)
+                                         event_list_widget=self.list_widget,
+                                         window=self)
 
         # 按鈕功能綁定
         self.buttons[0].clicked.connect(self.manager.open_edit_window)
-        # self.buttons[1].clicked.connect(self.edit_timer)
-        # self.buttons[2].clicked.connect(self.save_file)
-        # self.buttons[3].clicked.connect(self.delete_timer)
-        # self.buttons[4].clicked.connect(self.reset_timer)
-        # self.buttons[5].clicked.connect(self.import_config)
+        self.buttons[1].clicked.connect(self.manager.edit_timer)
+        self.buttons[2].clicked.connect(lambda: self.manager.save_file())
+        self.buttons[3].clicked.connect(self.manager.delete_timer)
+        self.buttons[4].clicked.connect(self.manager.reset_timer)
+        self.buttons[5].clicked.connect(lambda: self.manager.import_config_via_dialog())
 
-
+        self.list_widget.itemDoubleClicked.connect(lambda _: self.manager.edit_timer())
 
         # Bottom Button7
         self.bottom_button = QPushButton("啟動計時器")
         self.bottom_button.setFont(font)
         self.bottom_button.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
+        self.bottom_button.clicked.connect(self.toggle_timer)
 
         bottom_button_layout = QHBoxLayout()
         bottom_button_layout.addStretch()
         bottom_button_layout.addWidget(self.bottom_button)
         bottom_button_layout.addStretch()
+
 
         # Label
         self.label = QLabel("請點選按鈕")
@@ -95,4 +100,16 @@ class MainWindow(QWidget):
     def handle_create_timer(self):
         name = self.manager.open_edit_window()
         print(f"使用者輸入：{name}")
+
+    def toggle_timer(self):
+        self.timer_running = not self.timer_running
+
+        if self.timer_running:
+            self.bottom_button.setText("停止計時器")
+            self.label.setText("計時器已啟動")
+            # TODO: 啟動計時邏輯
+        else:
+            self.bottom_button.setText("啟動計時器")
+            self.label.setText("計時器已停止")
+            # TODO: 停止計時邏輯
 
