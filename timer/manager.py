@@ -3,17 +3,18 @@ from settings.scan_code_resolver import *
 
 
 class MainWindowManager:
-    def __init__(self, create_window_factory):
+    def __init__(self, create_window_factory, event_list_widget):
         self.create_window_factory = create_window_factory
+        self.list_widget = event_list_widget
 
     def open_edit_window(self):
         dialog = self.create_window_factory()
-        # if dialog.exec_() == QDialog.DialogCode.Accepted:
-        #     data = dialog.get_data()
-        #     name = data.get("name")
-        #     keys = ','.join(data.get("keys"))
-        #     item_text = f'{name} → {keys}'
-        #     self.event_list_widget.addItem(item_text)
+        if dialog.exec_() == QDialog.DialogCode.Accepted:
+            data = dialog.get_event_data()
+            name = data.get("name")
+            keys = ','.join(data.get("keys"))
+            item_text = f'{name} → {keys}'
+            self.list_widget.addItem(item_text)
 
 
     # def edit_timer(self, name, keys, cooldown, callback=None):

@@ -8,7 +8,7 @@ class MainWindow(QWidget):
         super().__init__()
         self.setWindowTitle("ElswordTimer")
         self.setGeometry(100, 100, 600, 450)
-        self.manager = MainWindowManager(lambda: EditWindow())
+
         self.setStyleSheet("""
             QWidget { background-color: #f0f4f8; }
             QPushButton {
@@ -50,6 +50,12 @@ class MainWindow(QWidget):
             self.buttons.append(btn)
             grid_layout.addWidget(btn, i // 3, i % 3)
 
+        # List widget
+        self.list_widget = QListWidget()
+        self.list_widget.setFont(font)
+        self.manager = MainWindowManager(lambda: EditWindow(),
+                                         event_list_widget=self.list_widget)
+
         # 按鈕功能綁定
         self.buttons[0].clicked.connect(self.manager.open_edit_window)
         # self.buttons[1].clicked.connect(self.edit_timer)
@@ -58,9 +64,7 @@ class MainWindow(QWidget):
         # self.buttons[4].clicked.connect(self.reset_timer)
         # self.buttons[5].clicked.connect(self.import_config)
 
-        # List widget
-        self.list_widget = QListWidget()
-        self.list_widget.setFont(font)
+
 
         # Bottom Button7
         self.bottom_button = QPushButton("啟動計時器")

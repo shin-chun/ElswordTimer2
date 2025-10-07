@@ -144,3 +144,9 @@ class EditWindow(QDialog):
             return True
 
         return super().eventFilter(obj, event)
+
+    def get_event_data(self):
+        return {
+            "name": self.event_name_inputs[0].text(),
+            "keys": [label.text() for label in self.key_labels]
+        }
