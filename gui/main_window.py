@@ -91,3 +91,4 @@ class MainWindow(QWidget):
     def handle_create_timer(self):
         name = self.manager.open_edit_window()
         print(f"使用者輸入：{name}")
+
