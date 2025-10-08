@@ -2,14 +2,14 @@
   {
     "name": "1",
     "main_keys": [
-      "None",
-      "None",
-      "None"
+      "A",
+      "B",
+      "C"
     ],
     "sub_keys": [
-      "None",
-      "None",
-      "None"
+      "A",
+      "B",
+      "D"
     ],
     "duration": 10
   }

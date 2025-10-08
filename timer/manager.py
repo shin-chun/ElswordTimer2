@@ -1,5 +1,7 @@
 from settings.common import *
 from settings.scan_code_resolver import *
+from timer.core import TimerCore, Keys, Keys2
+from gui.cooldown_window import CooldownWindow
 
 
 class MainWindowManager:
@@ -21,6 +23,16 @@ class MainWindowManager:
 
             self.list_widget.addItem(item_text)
             self.event_data_list.append(data)  # ✅ 儲存原始資料
+
+            print(data['duration'], type(data['duration']))
+
+            data_main_keys = TimerCore(
+                name='test_trigger',
+                keys=Keys(data['main_keys'][0], data['main_keys'][1], data['main_keys'][2]),
+                keys2=Keys2(data['sub_keys'][0], data['sub_keys'][1], data['sub_keys'][2]),
+                cooldown=data['duration'],
+            )
+
 
     def edit_timer(self):
         current_row = self.list_widget.currentRow()
@@ -201,5 +213,15 @@ class EditWindowManager:
 
     def clear_key(self, index):
         self.label_updater(index, "None")
+
+
+class CountdownManager:
+    def __init__(self):
+        self.windows = []
+
+    def create_and_show(self, core: TimerCore):
+        win = CooldownWindow(core, duration=None)
+        win.show()
+        self.windows.append(win)
 
 

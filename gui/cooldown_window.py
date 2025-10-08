@@ -1,14 +1,21 @@
 from settings.common import *
+from timer.core import TimerCore
 
-class CooldownAnimator:
-    def __init__(self, label: QLabel, duration: int, on_finish=None):
-        self.label = label
-        self.duration = duration
-        self.remaining = duration
+class CooldownWindow:
+    def __init__(self, core: TimerCore, on_finish=None, parent=None):
+        super().__init__(parent)
+        self.core = core
+        self.label = QLabel('等待觸發')
+        self.remaining = self.core.cooldown
         self.timer = QTimer()
         self.timer.setInterval(1000)  # 每秒更新
         self.timer.timeout.connect(self.update)
         self.on_finish = on_finish
+
+    def create(self, name, duration):
+        self.core.name = name
+        self.core.duration = duration
+
 
     def start(self):
         self.remaining = self.duration
