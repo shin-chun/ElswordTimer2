@@ -36,15 +36,10 @@ class TimerCore(QObject):
         self.state = TimerState.IDLE
         self.remaining = 0
 
-        self.timer = QTimer()
-        self.timer.setInterval(1000)
-        self.timer.timeout.connect(self._tick)
-
     def check_key(self, key):
         if self.match_sequence(self.keys, key) or self.match_sequence(self.keys2, key):
             self.state = TimerState.ACTIVE
             self.start_countdown()
-            self.state = TimerState.IDLE
 
     def match_sequence(self, keys_obj, key):
         if keys_obj.third_key == key and not keys_obj.first_key and not keys_obj.second_key:
@@ -55,6 +50,7 @@ class TimerCore(QObject):
         elif self.state == TimerState.SELECT and key == keys_obj.second_key:
             self.state = TimerState.LOCK
         elif self.state == TimerState.LOCK and key == keys_obj.third_key:
+
             return True
 
         return False
@@ -62,20 +58,10 @@ class TimerCore(QObject):
     def start_countdown(self):
         print(f"🚀 觸發技能：{self.name}，倒數 {self.cooldown} 秒")
         self.remaining = self.cooldown
-        self.timer.start()
+        # self.timer.start()
+        self.state = TimerState.IDLE
         if self.callback:
             self.callback(self.name, self.remaining)
-
-    def _tick(self):
-        self.remaining -= 1
-        if self.callback:
-            self.callback(self.name, self.remaining)
-
-        if self.remaining <= 0:
-            self.timer.stop()
-            print(f"✅ 技能 {self.name} 倒數結束")
-            if self.callback:
-                self.callback(self.name, 0)
 
     def reset(self):
         self.state = TimerState.IDLE
@@ -86,17 +72,15 @@ class TimerCore(QObject):
         if self.debug_mode:
             print(f"[DEBUG] {msg}")
 
-trigger = TimerCore(
+app = QCoreApplication(sys.argv)
+keys_obj = TimerCore(
     name='test_trigger',
     keys=Keys('a', 'b', 'c'),
-    keys2=Keys2('a', 'b', 'd'),
-    # second_keys=[['a', 'e', 'f'], ['a', 'e', 'g']],
+    keys2=Keys2('d', 'e', 'f'),
     cooldown=5
 )
 
-core_a = [ 'a', 'b', 'c', 'd']
+core_a = [ 'a', 'b', 'd', 'e', 'f', 'e', 'c']
 for k in core_a:
     print(f'現在輸入：{k}')
-    trigger.check_key(k)
-    print(f'目前狀態：{trigger.state}')
     time.sleep(0.5)

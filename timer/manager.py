@@ -26,7 +26,7 @@ class MainWindowManager:
 
             print(data['duration'], type(data['duration']))
 
-            data_main_keys = TimerCore(
+            keys_obj = TimerCore(
                 name='test_trigger',
                 keys=Keys(data['main_keys'][0], data['main_keys'][1], data['main_keys'][2]),
                 keys2=Keys2(data['sub_keys'][0], data['sub_keys'][1], data['sub_keys'][2]),

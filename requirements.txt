@@ -1,3 +1,8 @@
-pynput
-keyboard
-PySide6
+keyboard           ==0.13.5
+pip                ==25.2
+pynput             ==1.8.1
+PySide6            ==6.9.0
+PySide6_Addons     ==6.9.0
+PySide6_Essentials ==6.9.0
+shiboken6          ==6.9.0
+six                ==1.17.0
