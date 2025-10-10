@@ -60,7 +60,7 @@ class MainWindow(QWidget):
                                          window=self)
 
         # 按鈕功能綁定
-        self.buttons[0].clicked.connect(self.manager.open_edit_window)
+        self.buttons[0].clicked.connect(self.handle_create_timer)
         self.buttons[1].clicked.connect(self.manager.edit_timer)
         self.buttons[2].clicked.connect(lambda: self.manager.save_file())
         self.buttons[3].clicked.connect(self.manager.delete_timer)

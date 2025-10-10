@@ -72,15 +72,15 @@ class TimerCore(QObject):
         if self.debug_mode:
             print(f"[DEBUG] {msg}")
 
-app = QCoreApplication(sys.argv)
-keys_obj = TimerCore(
-    name='test_trigger',
-    keys=Keys('a', 'b', 'c'),
-    keys2=Keys2('d', 'e', 'f'),
-    cooldown=5
-)
-
-core_a = [ 'a', 'b', 'd', 'e', 'f', 'e', 'c']
-for k in core_a:
-    print(f'現在輸入：{k}')
-    time.sleep(0.5)
+# app = QCoreApplication(sys.argv)
+# keys_obj = TimerCore(
+#     name='test_trigger',
+#     keys=Keys('a', 'b', 'c'),
+#     keys2=Keys2('d', 'e', 'f'),
+#     cooldown=5
+# )
+#
+# core_a = [ 'a', 'b', 'd', 'e', 'f', 'e', 'c']
+# for k in core_a:
+#     print(f'現在輸入：{k}')
+#     time.sleep(0.5)

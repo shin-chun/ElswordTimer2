@@ -1,61 +1,76 @@
 from settings.common import *
-from timer.core import TimerCore
+from enum import Enum
 
-class CooldownWindow:
-    def __init__(self, core: TimerCore, on_finish=None, parent=None):
-        super().__init__(parent)
-        self.core = core
-        self.label = QLabel('等待觸發')
-        self.remaining = self.core.cooldown
-        self.timer = QTimer()
-        self.timer.setInterval(1000)  # 每秒更新
-        self.timer.timeout.connect(self.update)
-        self.on_finish = on_finish
+class CooldownState(Enum):
+    EMPTY = 0
+    SELECTED = 1
+    LOCKED = 2
+    TRIGGERED = 3
 
-    def create(self, name, duration):
-        self.core.name = name
-        self.core.duration = duration
+STATE_COLOR_MAP = {
+    CooldownState.EMPTY: "white",
+    CooldownState.SELECTED: "yellow",
+    CooldownState.LOCKED: "red",
+    CooldownState.TRIGGERED: "gray"
+}
+
+from PySide6.QtWidgets import QWidget, QLabel, QVBoxLayout
+from PySide6.QtCore import Qt, QTimer
+
+class CooldownWindow(QWidget):
+    def __init__(self, name: str, cooldown_seconds: int):
+        super().__init__(None)  # 確保是獨立視窗
+        self.name = name
+        self.cooldown_seconds = cooldown_seconds
+        self.remaining = cooldown_seconds
+        self.state = CooldownState.EMPTY
+        self.drag_position = None  # 拖曳起始點
+
+        self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
+        self.setAttribute(Qt.WA_TranslucentBackground)
+
+        self.label = QLabel(self)
+        self.label.setAlignment(Qt.AlignCenter)
+        self.label.setFixedSize(120, 60)
+
+        layout = QVBoxLayout()
+        layout.addWidget(self.label)
+        self.setLayout(layout)
+
+        self.timer = QTimer(self)
+        self.timer.timeout.connect(self.update_countdown)
+
+        self.update_label()
 
 
-    def start(self):
-        self.remaining = self.duration
-        self.label.setText(f"⏳ 倒數中：{self.remaining} 秒")
-        self.timer.start()
+    def start(self, state: CooldownState):
+        self.state = state
+        self.remaining = self.cooldown_seconds
+        self.update_label()
+        self.timer.start(1000)
 
-    def update(self):
+    def update_countdown(self):
         self.remaining -= 1
         if self.remaining <= 0:
             self.timer.stop()
-            self.label.setText("✅ 冷卻結束")
-            if self.on_finish:
-                self.on_finish()
-        else:
-            self.label.setText(f"⏳ 倒數中：{self.remaining} 秒")
+            self.state = CooldownState.TRIGGERED
+        self.update_label()
 
+    def update_label(self):
+        color = STATE_COLOR_MAP.get(self.state, "white")
+        self.label.setStyleSheet(f"background-color: {color}; border: 1px solid black;")
+        self.label.setText(f"{self.name}：{self.remaining}s")
 
-# class CountdownWindow(QWidget):
-#     def __init__(self, duration_sec=10):
-#         super().__init__()
-#         self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint | Qt.WindowType.Tool)
-#         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
-#         self.setFixedSize(200, 100)
-#
-#         # 設定字型
-#         font = QFont()
-#         font.setPointSize(12)
-#         font.setBold(True)
-#
-#         # 建立 label
-#         self.label = QLabel("倒數開始", self)
-#         self.label.setFont(font)
-#         self.label.setAlignment(Qt.AlignmentFlag.AlignCenter)
-#         self.label.setGeometry(0, 0, 200, 100)
-#         self.label.setStyleSheet("color: black; background-color: rgba(255, 255, 255, 180); border-radius: 10px;")
-#
-#         # 初始狀態
-#         # self.remaining = duration_sec
-#         # self.timer = QTimer(self)
-#         # self.timer.timeout.connect(CooldownManager.update_countdown)
-#         # self.timer.start(1000)
-#         #
-#         # CooldownManager.update_label()
+    def mousePressEvent(self, event):
+        if event.button() == Qt.MouseButton.LeftButton:
+            self.drag_position = event.globalPosition().toPoint() - self.frameGeometry().topLeft()
+            event.accept()
+
+    def mouseMoveEvent(self, event):
+        if event.buttons() & Qt.MouseButton.LeftButton and self.drag_position:
+            self.move(event.globalPosition().toPoint() - self.drag_position)
+            event.accept()
+
+    def mouseReleaseEvent(self, event):
+        self.drag_position = None
+        event.accept()

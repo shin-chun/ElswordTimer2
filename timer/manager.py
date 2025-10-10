@@ -1,7 +1,7 @@
 from settings.common import *
 from settings.scan_code_resolver import *
 from timer.core import TimerCore, Keys, Keys2
-from gui.cooldown_window import CooldownWindow
+from gui.cooldown_window import CooldownWindow, CooldownState
 
 
 class MainWindowManager:
@@ -215,13 +215,29 @@ class EditWindowManager:
         self.label_updater(index, "None")
 
 
-class CountdownManager:
+class TimerManager:
     def __init__(self):
-        self.windows = []
+        self.windows = {}
 
-    def create_and_show(self, core: TimerCore):
-        win = CooldownWindow(core, duration=None)
-        win.show()
-        self.windows.append(win)
+    def add_timer(self, skill_name: str, cooldown_seconds: int, position=(300, 300)):
+        if skill_name in self.windows:
+            self.remove_timer(skill_name)
+
+        window = CooldownWindow(skill_name, cooldown_seconds)
+        x, y = position
+        window.move(x, y)
+        window.show()
+        self.windows[skill_name] = window
+
+    def start_timer(self, skill_name: str, state: CooldownState):
+        if skill_name in self.windows:
+            self.windows[skill_name].start(state)
+
+    def remove_timer(self, skill_name: str):
+        if skill_name in self.windows:
+            self.windows[skill_name].close()
+            del self.windows[skill_name]
+
+
 
 
