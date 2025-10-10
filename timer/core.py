@@ -65,8 +65,7 @@ class TimerCore(QObject):
 
     def reset(self):
         self.state = TimerState.IDLE
-        self.remaining = 0
-        self.timer.stop()
+        self.remaining = self.cooldown
 
     def debug(self, msg):
         if self.debug_mode:

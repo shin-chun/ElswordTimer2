@@ -11,6 +11,10 @@ class MainWindowManager:
         self.window = window
         self.event_data_list = []  # 儲存每個事件的 dict
 
+    def start_all_timers(self):
+        for timer in self.timers.values():
+            timer.start(CooldownState.SELECTED)
+
     def open_edit_window(self):
         dialog = self.create_window_factory()
         if dialog.exec_() == QDialog.DialogCode.Accepted:

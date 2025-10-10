@@ -14,9 +14,6 @@ STATE_COLOR_MAP = {
     CooldownState.TRIGGERED: "gray"
 }
 
-from PySide6.QtWidgets import QWidget, QLabel, QVBoxLayout
-from PySide6.QtCore import Qt, QTimer
-
 class CooldownWindow(QWidget):
     def __init__(self, name: str, cooldown_seconds: int):
         super().__init__(None)  # 確保是獨立視窗

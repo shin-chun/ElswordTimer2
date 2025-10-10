@@ -3,7 +3,7 @@ from timer.manager import MainWindowManager
 from gui.edit_window import EditWindow
 
 
-class MainWindow(QWidget):
+class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.setWindowTitle("ElswordTimer")
@@ -107,6 +107,7 @@ class MainWindow(QWidget):
         if self.timer_running:
             self.bottom_button.setText("停止計時器")
             self.label.setText("計時器已啟動")
+            self.manager.start_all_timers()
             # TODO: 啟動計時邏輯
         else:
             self.bottom_button.setText("啟動計時器")
