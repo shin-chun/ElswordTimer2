@@ -1,5 +1,5 @@
 from settings.common import *
-from timer.manager import EditWindowManager
+from timer.edit_window_manager import EditWindowManager
 from functools import partial
 from settings.scan_code_resolver import ScanCodeStore
 
@@ -8,11 +8,12 @@ class EditWindow(QDialog):
     def __init__(self, title='編輯計時器', parent=None):
         super().__init__(parent)
         self.installEventFilter(self)
+        self.event_name_inputs = []
+        self.key_labels = []
         self.setWindowTitle(title)
         self.setMinimumSize(700, 350)  # 調整視窗大小以容納 6x4 格線
 
         self.recording_index = None
-        self.key_labels = []
         grid = QGridLayout()
 
         scan_code_store = ScanCodeStore()  # 或指定路徑 ScanCodeStore("your/path/scan_code_map.json")
@@ -29,7 +30,6 @@ class EditWindow(QDialog):
         event_font.setPointSize(14)
 
         # 一個輸入欄位
-        self.event_name_inputs = []
 
         input_field = QLineEdit()
         input_field.setFont(event_font)
@@ -188,6 +188,14 @@ class EditWindow(QDialog):
         confirm_btn.setFocusPolicy(Qt.FocusPolicy.NoFocus)
         cancel_btn.setFocusPolicy(Qt.FocusPolicy.NoFocus)
 
+    def get_event_data(self):
+        return {
+            "name": self.event_name_inputs[0].text(),
+            "main_keys": [label.text() for label in self.key_labels[:3]],
+            "sub_keys": [label.text() for label in self.key_labels[3:]],
+            "duration": self.duration_input.value()  # ✅ 關鍵回傳
+        }
+
     def key_label(self, key_labels):
         self.key_labels = self.key_labels = key_labels
 
@@ -207,10 +215,3 @@ class EditWindow(QDialog):
 
         return super().eventFilter(obj, event)
 
-    def get_event_data(self):
-        return {
-            "name": self.event_name_inputs[0].text(),
-            "main_keys": [label.text() for label in self.key_labels[:3]],
-            "sub_keys": [label.text() for label in self.key_labels[3:]],
-            "duration": self.duration_input.value()  # ✅ 關鍵回傳
-        }

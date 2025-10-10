@@ -1,7 +1,7 @@
 from settings.common import *
-from settings.scan_code_resolver import *
+from gui.cooldown_window import CooldownState
+from gui.edit_window import EditWindow
 from timer.core import TimerCore, Keys, Keys2
-from gui.cooldown_window import CooldownWindow, CooldownState
 
 
 class MainWindowManager:
@@ -11,12 +11,23 @@ class MainWindowManager:
         self.window = window
         self.event_data_list = []  # 儲存每個事件的 dict
 
+    def toggle_timer(self, running: bool):
+        if running:
+            self.start_all_timers()
+        else:
+            self.stop_all_timers()
+
     def start_all_timers(self):
         for timer in self.timers.values():
             timer.start(CooldownState.SELECTED)
 
     def open_edit_window(self):
-        dialog = self.create_window_factory()
+        dialog = EditWindow(parent=self.window)
+        dialog.exec()  # 或 dialog.show() 如果你要非模態
+
+
+    def confirm_edit(self):
+        dialog = EditWindow()
         if dialog.exec_() == QDialog.DialogCode.Accepted:
             data = dialog.get_event_data()
             name = data["name"]
@@ -158,90 +169,3 @@ class MainWindowManager:
         self.list_widget.item(current_row).setText(item_text)
 
         QMessageBox.information(self.window, "已重置", f"計時器「{name}」已重置為 {original_duration} 秒")
-
-class EditWindowManager:
-    def __init__(self, key_labels, label_updater, scan_code_store):
-        self.key_labels = key_labels
-        self.label_updater = label_updater
-        self.scan_code_store = scan_code_store
-        self.recording_index = None
-
-    def start_recording(self, index):
-        if self.recording_index is not None:
-            print(f"⚠️ 正在錄製 index={self.recording_index}，忽略新的請求 index={index}")
-            return
-        self.recording_index = index
-        print(f'🎬 開始錄製鍵位 index={index}')
-
-    def keyPressEvent(self, event):
-        """由主視窗的 eventFilter 傳入鍵盤事件"""
-        if self.recording_index is None:
-            return
-
-        scan_code = event.nativeScanCode()
-        qt_key = event.key()
-        key_name = self.scan_code_resolver(scan_code, qt_key)
-
-        self.label_updater(self.recording_index, key_name)
-        self.recording_index = None
-
-    def scan_code_resolver(self, scan_code: int, qt_key: int) -> str:
-        if self.recording_index is None:
-            return
-        key_name = self.scan_code_store.get(scan_code)
-        if not key_name:
-            key_name = QKeySequence(qt_key).toString() or f"Key({qt_key})"
-            self.scan_code_store.set(scan_code, key_name)
-            print(f"📝 新增掃描碼：{scan_code} → {key_name}")
-        else:
-            print(f"🔁 已存在掃描碼：{scan_code} → {key_name}")
-        return key_name
-
-    def handle_special_key(self, event) -> bool:
-        special_keys = {
-            Qt.Key.Key_Tab: "Tab",
-            Qt.Key.Key_Escape: "Esc",
-            Qt.Key.Key_Return: "Enter"
-        }
-        if self.recording_index is None:
-            return False
-
-        if event.key() in special_keys:
-            scan_code = event.nativeScanCode()
-            key_name = self.scan_code_store.get(scan_code) or special_keys[event.key()]
-            self.label_updater(self.recording_index, key_name)
-            self.recording_index = None
-            print(event.key())
-            return True
-        return False
-
-    def clear_key(self, index):
-        self.label_updater(index, "None")
-
-
-class TimerManager:
-    def __init__(self):
-        self.windows = {}
-
-    def add_timer(self, skill_name: str, cooldown_seconds: int, position=(300, 300)):
-        if skill_name in self.windows:
-            self.remove_timer(skill_name)
-
-        window = CooldownWindow(skill_name, cooldown_seconds)
-        x, y = position
-        window.move(x, y)
-        window.show()
-        self.windows[skill_name] = window
-
-    def start_timer(self, skill_name: str, state: CooldownState):
-        if skill_name in self.windows:
-            self.windows[skill_name].start(state)
-
-    def remove_timer(self, skill_name: str):
-        if skill_name in self.windows:
-            self.windows[skill_name].close()
-            del self.windows[skill_name]
-
-
-
-
