@@ -1,5 +1,5 @@
 from settings.common import *
-from timer.main_window_manager import MainWindowManager
+from manager.main_window_manager import MainWindowManager
 from gui.edit_window import EditWindow
 
 

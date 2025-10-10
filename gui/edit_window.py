@@ -1,5 +1,5 @@
 from settings.common import *
-from timer.edit_window_manager import EditWindowManager
+from manager.edit_window_manager import EditWindowManager
 from functools import partial
 from settings.scan_code_resolver import ScanCodeStore
 

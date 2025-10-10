@@ -1,8 +1,6 @@
 import sys
 from PySide6.QtWidgets import QApplication
 from gui.main_window import MainWindow
-from gui.cooldown_window import CooldownWindow, CooldownState
-from timer.timer_manager import TimerManager
 
 
 def main():
