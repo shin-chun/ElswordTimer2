@@ -2,13 +2,13 @@ from settings.common import *
 from enum import Enum
 
 class CooldownState(Enum):
-    EMPTY = 0
+    IDLE = 0
     SELECTED = 1
     LOCKED = 2
     TRIGGERED = 3
 
 STATE_COLOR_MAP = {
-    CooldownState.EMPTY: "white",
+    CooldownState.IDLE: "white",
     CooldownState.SELECTED: "yellow",
     CooldownState.LOCKED: "red",
     CooldownState.TRIGGERED: "gray"
@@ -20,14 +20,14 @@ class CooldownWindow(QWidget):
         self.name = name
         self.cooldown_seconds = cooldown_seconds
         self.remaining = cooldown_seconds
-        self.state = CooldownState.EMPTY
+        self.state = CooldownState.IDLE
         self.drag_position = None  # 拖曳起始點
 
-        self.setWindowFlags(Qt.FramelessWindowHint | Qt.WindowStaysOnTopHint)
-        self.setAttribute(Qt.WA_TranslucentBackground)
+        self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint)
+        self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
 
         self.label = QLabel(self)
-        self.label.setAlignment(Qt.AlignCenter)
+        self.label.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.label.setFixedSize(120, 60)
 
         layout = QVBoxLayout()
@@ -38,7 +38,11 @@ class CooldownWindow(QWidget):
         self.timer.timeout.connect(self.update_countdown)
 
         self.update_label()
+        self.resize(150, 80)  # 或者根據 label 大小自動調整
 
+    def set_state(self, state: CooldownState):
+        self.state = state
+        self.update_label()
 
     def start(self, state: CooldownState):
         self.state = state
@@ -51,6 +55,19 @@ class CooldownWindow(QWidget):
         if self.remaining <= 0:
             self.timer.stop()
             self.state = CooldownState.TRIGGERED
+        self.update_label()
+
+    def reset_display(self, duration: int = None):
+        if duration is not None:
+            self.cooldown_seconds = duration
+        self.remaining = self.cooldown_seconds
+        self.state = CooldownState.IDLE
+        self.timer.stop()
+        self.update_label()
+
+    def update_duration(self, new_duration: int):
+        self.cooldown_seconds = new_duration
+        self.remaining = new_duration
         self.update_label()
 
     def update_label(self):

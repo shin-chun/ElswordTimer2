@@ -5,7 +5,7 @@ from settings.scan_code_resolver import ScanCodeStore
 
 
 class EditWindow(QDialog):
-    def __init__(self, title='編輯計時器', parent=None):
+    def __init__(self, title='編輯計時器', parent=None, event_data=None):
         super().__init__(parent)
         self.installEventFilter(self)
         self.setWindowTitle(title)
@@ -19,7 +19,8 @@ class EditWindow(QDialog):
         self.manager = EditWindowManager(
             key_labels=self.key_labels,
             label_updater=self.update_label,
-            scan_code_store=scan_code_store
+            scan_code_store=scan_code_store,
+            event_data=event_data  # ✅ 傳入初始資料
         )
 
         self._setup_ui()

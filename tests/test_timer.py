@@ -1,4 +1,4 @@
-from timer.core import Timer
+from timer.timer_core import Timer
 
 def mock_callback(name, duration):
     print(f"⏱️ {name} 倒數 {duration} 秒開始！")

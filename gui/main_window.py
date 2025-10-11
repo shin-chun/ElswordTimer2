@@ -46,10 +46,11 @@ class MainWindow(QWidget):
         self.label = self.init_label(font)
 
         # 建立 manager
-        self.manager = MainWindowManager(lambda: EditWindow(),
-                                         event_list_widget=self.list_widget,
-                                         window=self)
-
+        self.manager = MainWindowManager(
+            create_window_factory=lambda parent=None: EditWindow(parent=parent),
+            event_list_widget=self.list_widget,
+            window=self
+        )
         # 綁定按鈕功能
         self.bind_button_actions()
 
