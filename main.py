@@ -1,6 +1,7 @@
 import sys
 from PySide6.QtWidgets import QApplication
 from gui.main_window import MainWindow
+from listen_hotkey.hotkey_listener import HotkeyListener
 
 
 def main():

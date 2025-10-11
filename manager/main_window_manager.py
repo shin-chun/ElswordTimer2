@@ -225,3 +225,7 @@ class MainWindowManager:
         sub_keys = ','.join(data.get("sub_keys", []))
         item_text = f'{name} → 主鍵: {main_keys}｜副鍵: {sub_keys}｜秒數：{duration}秒'
         self.list_widget.item(current_row).setText(item_text)
+
+    def input_key(self, key: str):
+        for timer in self.timers.values():
+            timer.check_key(key)

@@ -1,6 +1,7 @@
 from settings.common import *
 from manager.main_window_manager import MainWindowManager
 from gui.edit_window import EditWindow
+from listen_hotkey.hotkey_listener import HotkeyListener
 
 
 class MainWindow(QWidget):
@@ -64,6 +65,8 @@ class MainWindow(QWidget):
         main_layout.addWidget(self.label)
 
         self.setLayout(main_layout)
+        self.hotkey_listener = HotkeyListener(self.manager)
+        self.hotkey_listener.start()
 
     def init_buttons(self, font):
         grid_layout = QGridLayout()
