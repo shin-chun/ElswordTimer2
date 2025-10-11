@@ -63,6 +63,26 @@ class EditWindowManager:
     def clear_key(self, index):
         self.label_updater(index, "None")
 
+    def store_event_data(self, data: dict):
+        """儲存事件資料到 JSON 檔案"""
+        try:
+            with open(self.storage_path, "w", encoding="utf-8") as f:
+                json.dump(data, f, ensure_ascii=False, indent=2)
+        except Exception as e:
+            print(f"[儲存失敗] {e}")
+
+    def load_event_data(self) -> dict:
+        """載入事件資料（若存在）"""
+        if not os.path.exists(self.storage_path):
+            return {}
+        try:
+            with open(self.storage_path, "r", encoding="utf-8") as f:
+                return json.load(f)
+        except Exception as e:
+            print(f"[載入失敗] {e}")
+            return {}
+
+
 
 
 
