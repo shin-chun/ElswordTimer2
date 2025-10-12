@@ -3,12 +3,15 @@ from settings.common import *
 
 
 class CooldownManager(QObject):
+    start_timer_signal = Signal(str, object)  # 第二個參數用 object 接收 Enum
+
     def __init__(self, CooldownWindowClass):
         super().__init__()
         self.CooldownWindowClass = CooldownWindowClass
         self.windows: dict[str, CooldownWindow] = {}
         self._timer: dict[str, QTimer] = {}
-        self.state = CooldownState.IDLE
+        self.moveToThread(QApplication.instance().thread())
+        self.start_timer_signal.connect(self.start_timer)
 
     def add_timer(self, skill_name: str, cooldown_seconds: int, position=(300, 300)):
         if skill_name in self.windows:
@@ -20,6 +23,13 @@ class CooldownManager(QObject):
         self.windows[skill_name] = window
 
     def start_timer(self, skill_name: str, state: CooldownState):
+        # 確保此方法在主執行緒執行
+        if QThread.currentThread() != self.thread():
+            print(f"⚠️ 非主執行緒，透過 signal 轉移 start_timer({skill_name})")
+            self.start_timer_signal.emit(skill_name, state)
+            return
+
+        # 建立視窗（如尚未存在）
         if skill_name not in self.windows:
             print(f"🧊 尚未建立冷卻視窗：{skill_name}，自動建立")
             self.add_timer(skill_name, cooldown_seconds=5)
@@ -28,16 +38,26 @@ class CooldownManager(QObject):
         window.set_state(state)
         window.set_remaining(window.cooldown_seconds)
 
+        # 清除舊的 timer（如存在）
         if skill_name in self._timer:
-            self._timer[skill_name].stop()
-            self._timer[skill_name].deleteLater()
+            old_timer = self._timer.pop(skill_name)
+            old_timer.stop()
+            old_timer.deleteLater()
 
+        # 建立新的 QTimer
         timer = QTimer(self)
         timer.setInterval(1000)
-        timer.timeout.connect(lambda name=skill_name: self._tick(name))
+        timer.timeout.connect(partial(self._tick, skill_name))
         timer.start()
         self._timer[skill_name] = timer
-        print(timer.isActive())
+
+        # 診斷印出
+        print("✅ Timer started")
+        print("Manager thread:", self.thread())
+        print("Timer thread:", timer.thread())
+        print("Current thread:", QThread.currentThread())
+        print("Timer parent:", timer.parent())
+        print("Timer isActive:", timer.isActive())
 
     def _tick(self, skill_name: str):
         print(f"⏱️ tick: {skill_name}")

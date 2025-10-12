@@ -45,7 +45,7 @@ class TimerCore(QObject):
     def check_key(self, key):
         if self.match_sequence(self.keys, key) or self.match_sequence(self.keys2, key):
             self.state = TimerState.ACTIVE
-            self.manager.start_timer(self.name, self.state)
+            self.manager.start_timer_signal.emit(self.name, CooldownState.TRIGGERED)
 
     def match_sequence(self, keys_obj, key):
         if keys_obj.third_key == key and not keys_obj.first_key and not keys_obj.second_key:
