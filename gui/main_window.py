@@ -1,6 +1,7 @@
 from settings.common import *
 from manager.main_window_manager import MainWindowManager
 from manager.cooldown_manager import CooldownManager
+from gui.cooldown_window import CooldownWindow
 from gui.edit_window import EditWindow
 from listen_hotkey.hotkey_listener import HotkeyListener
 from timer.timer_factory import TimerFactory
@@ -14,7 +15,7 @@ class MainWindow(QWidget):
         self.timer_running = False  # 初始狀態：未啟動
 
         # ✅ 初始化 CooldownManager 與 TimerFactory
-        self.cooldown_manager = CooldownManager()
+        self.cooldown_manager = CooldownManager(CooldownWindow)
         self.timer_factory = TimerFactory(self.cooldown_manager)
 
 

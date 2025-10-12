@@ -42,21 +42,10 @@ class TimerCore(QObject):
     def bind_manager(self, manager: CooldownManager):
         self.manager = manager
 
-    def trigger(self):
-        if not self.manager:
-            print("⚠️ Manager 尚未注入")
-            return
-
-        if not self.manager.has_timer(self.name):
-            position = self.manager.cooldown_positions.get(self.name, (300, 300))
-            self.manager.add_timer(self.name, self.cooldown, position=position)
-
-        self.manager.start_timer(self.name, CooldownState.TRIGGERED)
-
     def check_key(self, key):
         if self.match_sequence(self.keys, key) or self.match_sequence(self.keys2, key):
             self.state = TimerState.ACTIVE
-            self.start_countdown()
+            self.manager.start_timer(self.name, self.state)
 
     def match_sequence(self, keys_obj, key):
         if keys_obj.third_key == key and not keys_obj.first_key and not keys_obj.second_key:
@@ -71,14 +60,12 @@ class TimerCore(QObject):
 
         return False
 
-    def start_countdown(self):
-        print(f"🚀 觸發技能：{self.name}，倒數 {self.cooldown} 秒")
-        self.remaining = self.cooldown
-        self.trigger()
-        # self.state = TimerState.IDLE
-
-        if self.callback:
-            self.callback(self.name, self.remaining)
+    # def start_countdown(self):
+    #     print(f"🚀 觸發技能：{self.name}，倒數 {self.cooldown} 秒")
+    #     self.remaining = self.cooldown
+    #     self.manager.start_timer(self.name, self.state)
+    #     if self.callback:
+    #         self.callback(self.name, self.remaining)
 
     def update_config(self, keys: Keys, keys2: Keys2, cooldown: int):
         self.keys = keys

@@ -19,7 +19,6 @@ class HotkeyListener:
                 event = keyboard.read_event()
                 if event.event_type == keyboard.KEY_DOWN:
                     key = event.name.upper()
-                    print(f"🎹 鍵盤輸入：{key}")
                     self.timer_manager.input_key(key)
             except Exception as e:
                 print(f"❌ 鍵盤監聽錯誤：{e}")
