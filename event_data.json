@@ -1,16 +1,24 @@
-[
-  {
-    "name": "1",
-    "main_keys": [
-      "A",
-      "B",
-      "C"
-    ],
-    "sub_keys": [
-      "None",
-      "None",
-      "None"
-    ],
-    "duration": 10
+{
+  "events": [
+    {
+      "name": "1",
+      "main_keys": [
+        "A",
+        "B",
+        "C"
+      ],
+      "sub_keys": [
+        "None",
+        "None",
+        "None"
+      ],
+      "duration": 10
+    }
+  ],
+  "positions": {
+    "1": [
+      1385,
+      728
+    ]
   }
-]
+}

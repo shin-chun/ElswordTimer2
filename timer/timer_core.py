@@ -1,7 +1,8 @@
 from settings.common import *
 from enum import Enum
 from dataclasses import dataclass
-from gui.cooldown_window import CooldownWindow, CooldownState
+from gui.cooldown_window import CooldownState
+from manager.cooldown_manager import CooldownManager
 
 
 @dataclass
@@ -34,37 +35,23 @@ class TimerCore(QObject):
         self.callback = callback
         self.state = 'IDLE'
         self.remaining = cooldown
-        # ✅ 明確初始化以下屬性
         self.active = False
-        self.cooldown_window = None
-        self.debug_mode = False  # 如果你要用 debug() 方法
+        self.debug_mode = False
+        self.manager = None
 
-    def update_config(self, keys: Keys, keys2: Keys2, cooldown: int):
-        self.keys = keys
-        self.keys2 = keys2
-        self.cooldown = cooldown
-        self.remaining = cooldown
-        self.state = "IDLE"
-        if hasattr(self, 'cooldown_window'):
-            self.cooldown_window.update_duration(cooldown)
-        print(f"🔄 TimerCore「{self.name}」已更新設定")
+    def bind_manager(self, manager: CooldownManager):
+        self.manager = manager
 
-    def show_cooldown_window(self, state):
-        print(f"✅ 顯示冷卻視窗：{self.name}")
-        if self.cooldown_window is None:
-            self.cooldown_window = CooldownWindow(self.name, self.cooldown)
-        self.cooldown_window.set_state(state)
-        self.cooldown_window.show()
+    def trigger(self):
+        if not self.manager:
+            print("⚠️ Manager 尚未注入")
+            return
 
-    def stop_detection(self):
-        # 停止鍵盤偵測或其他觸發邏輯
-        self.active = False
-        # 停止任何 thread 或 timer（如果有）
+        if not self.manager.has_timer(self.name):
+            position = self.manager.cooldown_positions.get(self.name, (300, 300))
+            self.manager.add_timer(self.name, self.cooldown, position=position)
 
-    def close_cooldown_window(self):
-        if hasattr(self, 'cooldown_window') and self.cooldown_window.isVisible():
-            self.cooldown_window.close()
-
+        self.manager.start_timer(self.name, CooldownState.TRIGGERED)
 
     def check_key(self, key):
         if self.match_sequence(self.keys, key) or self.match_sequence(self.keys2, key):
@@ -80,7 +67,6 @@ class TimerCore(QObject):
         elif self.state == TimerState.SELECT and key == keys_obj.second_key:
             self.state = TimerState.LOCK
         elif self.state == TimerState.LOCK and key == keys_obj.third_key:
-
             return True
 
         return False
@@ -88,29 +74,37 @@ class TimerCore(QObject):
     def start_countdown(self):
         print(f"🚀 觸發技能：{self.name}，倒數 {self.cooldown} 秒")
         self.remaining = self.cooldown
-        # self.timer.start()
-        self.state = TimerState.IDLE
+        self.trigger()
+        # self.state = TimerState.IDLE
+
         if self.callback:
             self.callback(self.name, self.remaining)
+
+    def update_config(self, keys: Keys, keys2: Keys2, cooldown: int):
+        self.keys = keys
+        self.keys2 = keys2
+        self.cooldown = cooldown
+        self.remaining = cooldown
+        self.state = "IDLE"
+        if self.manager:
+            self.manager.update_timer(self.name, cooldown)
+        print(f"🔄 TimerCore「{self.name}」已更新設定")
 
     def reset(self, cooldown=None):
         if cooldown is not None:
             self.cooldown = cooldown
         self.remaining = self.cooldown
         self.state = "IDLE"
-        # 若有 timer 執行緒，這裡應該停止它
-        if hasattr(self, 'cooldown_window'):
-            self.cooldown_window.reset_display(self.cooldown)
-
-    def start(self, state: CooldownState):
-        if self.cooldown_window is None:
-            self.cooldown_window = CooldownWindow(self.name, self.cooldown)
-        self.cooldown_window.start(state)
+        if self.manager:
+            self.manager.reset_timer(self.name, self.cooldown)
 
     def debug(self, msg):
         if self.debug_mode:
             print(f"[DEBUG] {msg}")
 
+    def stop_detection(self):
+        self.active = False
+        print(f"🛑 TimerCore「{self.name}」已停止偵測")
 
 # app = QCoreApplication(sys.argv)
 # keys_obj = TimerCore(

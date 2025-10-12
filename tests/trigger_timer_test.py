@@ -52,16 +52,16 @@ class TriggerTimer:
     # for k in ['a', 'b', 'e', 'f', 'a', 'b', 'd']:
     #     on_key_press(k)
 
-trigger = TriggerTimer(
-    name='test_trigger',
-    keys=[['a', 'b', 'c'], ['a', 'b', 'd']],
-    second_keys=[['a', 'e', 'f'], ['a', 'e', 'g']],
-    window=10,
-    cooldown=5
-)
-# print(trigger.keys, type(trigger.keys))
-array_a = ['a', 'b', 'e', 'c', 'f', 'a']
-for k in array_a:
-    print(f'現在輸入：{k}', type(k))
-    trigger.check_key(k)
-    time.sleep(0.5)
+# trigger = TriggerTimer(
+#     name='test_trigger',
+#     keys=[['a', 'b', 'c'], ['a', 'b', 'd']],
+#     second_keys=[['a', 'e', 'f'], ['a', 'e', 'g']],
+#     window=10,
+#     cooldown=5
+# )
+# # print(trigger.keys, type(trigger.keys))
+# array_a = ['a', 'b', 'e', 'c', 'f', 'a']
+# for k in array_a:
+#     print(f'現在輸入：{k}', type(k))
+#     trigger.check_key(k)
+#     time.sleep(0.5)

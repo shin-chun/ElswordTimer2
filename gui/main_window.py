@@ -1,8 +1,10 @@
 from settings.common import *
 from manager.main_window_manager import MainWindowManager
+from manager.cooldown_manager import CooldownManager
 from gui.edit_window import EditWindow
 from listen_hotkey.hotkey_listener import HotkeyListener
-
+from timer.timer_factory import TimerFactory
+from timer.timer_core import Keys, Keys2
 
 class MainWindow(QWidget):
     def __init__(self):
@@ -10,6 +12,15 @@ class MainWindow(QWidget):
         self.setWindowTitle("ElswordTimer")
         self.setGeometry(100, 100, 600, 450)
         self.timer_running = False  # 初始狀態：未啟動
+
+        # ✅ 初始化 CooldownManager 與 TimerFactory
+        self.cooldown_manager = CooldownManager()
+        self.timer_factory = TimerFactory(self.cooldown_manager)
+
+
+        # ✅ 建立技能 TimerCore 實例
+        self.timers = {}
+        self.init_timers()
 
         self.setStyleSheet("""
             QWidget { background-color: #f0f4f8; }
@@ -50,7 +61,9 @@ class MainWindow(QWidget):
         self.manager = MainWindowManager(
             create_window_factory=lambda parent=None: EditWindow(parent=parent),
             event_list_widget=self.list_widget,
-            window=self
+            window=self,
+            cooldown_manager=self.cooldown_manager
+
         )
         # 綁定按鈕功能
         self.bind_button_actions()
@@ -67,6 +80,35 @@ class MainWindow(QWidget):
         self.setLayout(main_layout)
         self.hotkey_listener = HotkeyListener(self.manager)
         self.hotkey_listener.start()
+
+    def init_timers(self):
+        configs = [
+            {
+                "name": "火球術",
+                "keys": Keys("A", "S", "D"),
+                "keys2": Keys2("Z", "X", "C"),
+                "cooldown": 10
+            },
+            {
+                "name": "冰凍術",
+                "keys": Keys("Q", "W", "E"),
+                "keys2": Keys2("U", "I", "O"),
+                "cooldown": 15
+            }
+        ]
+
+        for cfg in configs:
+            timer = self.timer_factory.create(
+                name=cfg["name"],
+                keys=cfg["keys"],
+                keys2=cfg["keys2"],
+                cooldown=cfg["cooldown"],
+                callback=self.on_timer_triggered
+            )
+            self.timers[cfg["name"]] = timer
+
+    def on_timer_triggered(self, name, remaining):
+        print(f"✅ 技能「{name}」觸發，剩餘 {remaining} 秒")
 
     def init_buttons(self, font):
         grid_layout = QGridLayout()
