@@ -32,7 +32,7 @@ class MainWindowManager:
             if not self.cooldown_manager.has_timer(name):
                 position = self.cooldown_positions.get(name, (300, 300))
                 self.cooldown_manager.add_timer(name, self.timers[name].cooldown, position=position)
-            self.cooldown_manager.set_state(name, CooldownState.IDLE)
+            self.cooldown_manager.set_state(name, CooldownState.SELECTED)
             self.cooldown_manager.get_window(name).show()
 
     def stop_all_timers_and_close_windows(self):
@@ -40,9 +40,9 @@ class MainWindowManager:
             timer.stop_detection()
             self.cooldown_manager.remove_timer(name)
 
-    # def start_all_timers(self):
-    #     for name in self.timers:
-    #         self.cooldown_manager.start_timer(name, CooldownState.IDLE)
+    def start_all_timers(self):
+        for name in self.timers:
+            self.cooldown_manager.start_timer(name, CooldownState.SELECTED)
 
     def open_edit_window(self):
         dialog = self.create_window_factory(parent=self.window)  # 建立編輯視窗

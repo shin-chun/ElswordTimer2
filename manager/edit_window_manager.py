@@ -3,12 +3,13 @@ from settings.common import *
 
 
 class EditWindowManager:
-    def __init__(self, key_labels, label_updater, scan_code_store, event_data=None):
+    def __init__(self, key_labels, label_updater, scan_code_store, event_data=None, keyboard_owner=None):
         self.key_labels = key_labels
         self.label_updater = label_updater
         self._event_data = event_data or {}
         self.scan_code_store = scan_code_store
         self.recording_index = None
+        self.keyboard_owner = keyboard_owner
 
 
     def start_recording(self, index):
@@ -16,6 +17,7 @@ class EditWindowManager:
             print(f"⚠️ 正在錄製 index={self.recording_index}，忽略新的請求 index={index}")
             return
         self.recording_index = index
+        self.keyboard_owner.grabKeyboard()
         print(f'🎬 開始錄製鍵位 index={index}')
 
     def keyPressEvent(self, event):
@@ -23,14 +25,41 @@ class EditWindowManager:
         if self.recording_index is None:
             return
 
+        # ① 取得鍵盤資訊
         scan_code = event.nativeScanCode()
         qt_key = event.key()
+
+        # ② 解析鍵名（方向鍵、功能鍵等）
         key_name = self.scan_code_resolver(scan_code, qt_key)
 
+        # ③ 除錯用：可選擇性印出鍵名
+        print(f"[錄製] index={self.recording_index}, key={key_name}")
+
+        # ④ 更新 UI 顯示
         self.label_updater(self.recording_index, key_name)
+
+        # ⑤ 結束錄製狀態
         self.recording_index = None
+        self.keyboard_owner.releaseKeyboard()
+        # ⑥ 阻止事件繼續傳遞（可選）
+        event.accept()
 
     def scan_code_resolver(self, scan_code: int, qt_key: int) -> str:
+        key_map = {
+            Qt.Key.Key_Left: "LEFT",
+            Qt.Key.Key_Right: "RIGHT",
+            Qt.Key.Key_Up: "UP",
+            Qt.Key.Key_Down: "DOWN",
+            Qt.Key.Key_Escape: "ESC",
+            Qt.Key.Key_Return: "ENTER",
+            Qt.Key.Key_Space: "SPACE",
+            # 可擴充更多鍵
+        }
+
+        # 若有對應鍵名，直接回傳
+        if qt_key in key_map:
+            return key_map[qt_key]
+
         if self.recording_index is None:
             return
         key_name = self.scan_code_store.get(scan_code)

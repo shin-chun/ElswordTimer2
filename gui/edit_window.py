@@ -17,10 +17,11 @@ class EditWindow(QDialog):
 
         scan_code_store = ScanCodeStore()
         self.manager = EditWindowManager(
-            key_labels=self.key_labels,
-            label_updater=self.update_label,
-            scan_code_store=scan_code_store,
-            event_data=event_data  # ✅ 傳入初始資料
+            key_labels = self.key_labels,
+            label_updater = self.update_label,
+            scan_code_store = scan_code_store,
+            event_data = event_data,  # ✅ 傳入初始資料
+            keyboard_owner = self
         )
 
         self._setup_ui()

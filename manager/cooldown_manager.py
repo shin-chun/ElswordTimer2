@@ -7,11 +7,15 @@ class CooldownManager(QObject):
 
     def __init__(self, CooldownWindowClass):
         super().__init__()
+        self.state = None
         self.CooldownWindowClass = CooldownWindowClass
         self.windows: dict[str, CooldownWindow] = {}
         self._timer: dict[str, QTimer] = {}
         self.moveToThread(QApplication.instance().thread())
         self.start_timer_signal.connect(self.start_timer)
+        # self.cooldown_manager = CooldownManager(CooldownWindow)
+
+        self.setup_shortcuts()
 
     def add_timer(self, skill_name: str, cooldown_seconds: int, position=(300, 300)):
         if skill_name in self.windows:
@@ -25,13 +29,18 @@ class CooldownManager(QObject):
     def start_timer(self, skill_name: str, state: CooldownState):
         # 確保此方法在主執行緒執行
         if QThread.currentThread() != self.thread():
-            print(f"⚠️ 非主執行緒，透過 signal 轉移 start_timer({skill_name})")
+            # print(f"⚠️ 非主執行緒，透過 signal 轉移 start_timer({skill_name})")
             self.start_timer_signal.emit(skill_name, state)
+            return
+
+        existing_timer = self._timer.get(skill_name)
+        if existing_timer and existing_timer.isActive():
+            # print(f"⏳ Timer 已在運作中：{skill_name}，略過重啟")
             return
 
         # 建立視窗（如尚未存在）
         if skill_name not in self.windows:
-            print(f"🧊 尚未建立冷卻視窗：{skill_name}，自動建立")
+            # print(f"🧊 尚未建立冷卻視窗：{skill_name}，自動建立")
             self.add_timer(skill_name, cooldown_seconds=5)
 
         window = self.windows[skill_name]
@@ -52,12 +61,12 @@ class CooldownManager(QObject):
         self._timer[skill_name] = timer
 
         # 診斷印出
-        print("✅ Timer started")
-        print("Manager thread:", self.thread())
-        print("Timer thread:", timer.thread())
-        print("Current thread:", QThread.currentThread())
-        print("Timer parent:", timer.parent())
-        print("Timer isActive:", timer.isActive())
+        # print("✅ Timer started")
+        # print("Manager thread:", self.thread())
+        # print("Timer thread:", timer.thread())
+        # print("Current thread:", QThread.currentThread())
+        # print("Timer parent:", timer.parent())
+        # print("Timer isActive:", timer.isActive())
 
     def _tick(self, skill_name: str):
         print(f"⏱️ tick: {skill_name}")
@@ -114,3 +123,22 @@ class CooldownManager(QObject):
     def set_state(self, skill_name: str, state: CooldownState):
         if skill_name in self.windows:
             self.windows[skill_name].set_state(state)
+
+    def reset_all_cooldowns(self):
+        print("🔄 F8 快捷鍵觸發：重置所有冷卻視窗")
+        for skill_name, window in self.windows.items():
+            window.set_remaining(window.cooldown_seconds)
+            window.set_state(CooldownState.IDLE)
+
+            # 停止 timer（如存在）
+            if skill_name in self._timer:
+                self._timer[skill_name].stop()
+                self._timer[skill_name].deleteLater()
+                del self._timer[skill_name]
+
+            print(f"✅ 已重置：{skill_name}")
+
+    def setup_shortcuts(self):
+        reset_shortcut = QShortcut(QKeySequence("F8"), self)
+        reset_shortcut.setContext(Qt.ShortcutContext.ApplicationShortcut)
+        reset_shortcut.activated.connect(self.reset_all_cooldowns)

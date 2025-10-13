@@ -25,6 +25,9 @@ class CooldownWindow(QWidget):
         self.remaining = cooldown_seconds
         self.state = CooldownState.IDLE
 
+        self._dragging = False
+        self._drag_offset = QPoint()
+
         self.setWindowFlags(Qt.WindowType.FramelessWindowHint | Qt.WindowType.WindowStaysOnTopHint)
         self.setAttribute(Qt.WidgetAttribute.WA_TranslucentBackground)
 
@@ -74,3 +77,23 @@ class CooldownWindow(QWidget):
     def get_position(self) -> tuple[int, int]:
         pos = self.pos()
         return (pos.x(), pos.y())
+
+        # 🖱️ 滑鼠拖曳支援
+
+    def mousePressEvent(self, event):
+        if event.button() == Qt.MouseButton.LeftButton:
+            self._dragging = True
+            self._drag_offset = event.globalPosition().toPoint() - self.frameGeometry().topLeft()
+            event.accept()
+
+    def mouseMoveEvent(self, event):
+        if self._dragging:
+            new_pos = event.globalPosition().toPoint() - self._drag_offset
+            self.move(new_pos)
+            event.accept()
+
+    def mouseReleaseEvent(self, event):
+        if event.button() == Qt.MouseButton.LeftButton:
+            self._dragging = False
+            event.accept()
+

@@ -63,8 +63,7 @@ class MainWindow(QWidget):
             create_window_factory=lambda parent=None: EditWindow(parent=parent),
             event_list_widget=self.list_widget,
             window=self,
-            cooldown_manager=self.cooldown_manager
-
+            cooldown_manager=self.cooldown_manager,
         )
         # 綁定按鈕功能
         self.bind_button_actions()
@@ -175,3 +174,5 @@ class MainWindow(QWidget):
         else:
             self.bottom_button.setText("啟動計時器")
             self.label.setText("計時器已停止")
+
+

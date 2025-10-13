@@ -6,7 +6,7 @@ authors = ["原彬 <your@email.com>"]
 license = "MIT"
 
 [tool.poetry.dependencies]
-python = "3.13.5"
+python = "3.13.7"
 keyboard = "0.13.5"
 pip = "25.2"
 pynput = "1.8.1"

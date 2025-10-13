@@ -26,7 +26,7 @@ class TimerState(Enum):
 
 
 class TimerCore(QObject):
-    def __init__(self, name, keys: Keys, keys2: Keys2, cooldown, callback=None):
+    def __init__(self, name, keys: Keys, keys2: Keys2, cooldown, cooldown_manager: CooldownManager, callback=None):
         super().__init__()
         self.name = name
         self.keys = keys
@@ -38,6 +38,7 @@ class TimerCore(QObject):
         self.active = False
         self.debug_mode = False
         self.manager = None
+        self.cooldown_manager = cooldown_manager
 
     def bind_manager(self, manager: CooldownManager):
         self.manager = manager
@@ -53,8 +54,10 @@ class TimerCore(QObject):
 
         if key == keys_obj.first_key:
             self.state = TimerState.SELECT
+            self.cooldown_manager.set_state(self.name, CooldownState.SELECTED)
         elif self.state == TimerState.SELECT and key == keys_obj.second_key:
             self.state = TimerState.LOCK
+            self.cooldown_manager.set_state(self.name, CooldownState.LOCKED)
         elif self.state == TimerState.LOCK and key == keys_obj.third_key:
             return True
 

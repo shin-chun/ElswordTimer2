@@ -3,16 +3,16 @@
     {
       "name": "影子",
       "main_keys": [
-        "A",
-        "B",
-        "C"
+        "Right Shift",
+        "LEFT",
+        "Left Ctrl"
       ],
       "sub_keys": [
-        "A",
-        "B",
-        "D"
+        "Right Shift",
+        "LEFT",
+        "Left Alt"
       ],
-      "duration": 10
+      "duration": 60
     }
   ],
   "positions": {}
