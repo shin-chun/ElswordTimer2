@@ -7,7 +7,6 @@ from manager.group_state_manager import GroupStateManager
 
 class CooldownManager(QObject):
     start_timer_signal = Signal(str, object)  # 第二個參數用 object 接收 Enum
-
     def __init__(self, CooldownWindowClass):
         super().__init__()
         self.timer_cores: dict[str, TimerCore] = {}

@@ -11,21 +11,20 @@ from manager.group_state_manager import GroupStateManager
 class MainWindow(QWidget):
     def __init__(self):
         super().__init__()
+
+        # ✅ 建立群組管理器（只需要一次）
+        self.group_manager = GroupStateManager()
+
+        # ✅ 初始化技能容器
+        self.timers = {}
+        self.timer_cores = []
+
+        # ✅ 初始化 UI 視窗
         self.setWindowTitle("ElswordTimer")
         self.setGeometry(100, 100, 600, 450)
-        self.timer_running = False  # 初始狀態：未啟動
-        self.group_manager = GroupStateManager()  # ✅ 新增群組管理器
+        self.timer_running = False
 
-        # ✅ 初始化 CooldownManager 與 TimerFactory
-        self.cooldown_manager = CooldownManager(CooldownWindow)
-        self.timer_factory = TimerFactory(self.cooldown_manager)
-
-
-        # ✅ 建立技能 TimerCore 實例
-        self.timers = {}
-        self.timer_cores = []  # ✅ 初始化 timer_cores
-        self.init_timers()
-
+        # ✅ 初始化樣式
         self.setStyleSheet("""
             QWidget { background-color: #f0f4f8; }
             QPushButton {
@@ -55,24 +54,30 @@ class MainWindow(QWidget):
         font.setPointSize(14)
         font.setBold(True)
 
-        # 初始化 UI 元件
+        # ✅ 初始化 UI 元件
         grid_layout = self.init_buttons(font)
         self.list_widget = self.init_list_widget(font)
         bottom_button_layout = self.init_bottom_button(font)
         self.label = self.init_label(font)
 
-        # 建立 manager
+        # ✅ 建立 TimerFactory（如果它不需要 cooldown_manager）
+        self.timer_factory = TimerFactory()  # 或改寫成不依賴 cooldown_manager
+
+        # ✅ 建立技能 TimerCore 並綁定管理器（每個技能會建立自己的 cooldown_window/manager）
+        self.init_timers()
+
+        # ✅ 建立主邏輯管理器
         self.manager = MainWindowManager(
             create_window_factory=lambda parent=None: EditWindow(parent=parent),
             event_list_widget=self.list_widget,
             window=self,
-            cooldown_manager=self.cooldown_manager,
+            cooldown_manager=None  # 如果你不再共用 cooldown_manager，可傳 None 或移除此參數
         )
 
-        # 綁定按鈕功能
+        # ✅ 綁定按鈕功能
         self.bind_button_actions()
 
-        # 主 layout
+        # ✅ 主 layout
         main_layout = QVBoxLayout()
         main_layout.setSpacing(15)
         main_layout.setContentsMargins(20, 20, 20, 20)
@@ -80,13 +85,14 @@ class MainWindow(QWidget):
         main_layout.addWidget(self.list_widget)
         main_layout.addLayout(bottom_button_layout)
         main_layout.addWidget(self.label)
-
-        self.cooldown_manager.set_timer_cores(self.timers)
-        print(f"📦 self.timers 包含技能：{list(self.timers.keys())}")
-
         self.setLayout(main_layout)
+
+        # ✅ 啟動熱鍵監聽
         self.hotkey_listener = HotkeyListener(self.manager)
         self.hotkey_listener.start()
+
+        # ✅ 印出已建立技能
+        print(f"📦 self.timers 包含技能：{list(self.timers.keys())}")
 
     def init_timers(self):
         configs = [
@@ -108,6 +114,11 @@ class MainWindow(QWidget):
         self.timers = {}
 
         for cfg in configs:
+            # ✅ 建立冷卻視窗與管理器（每個技能獨立）
+            cooldown_window = CooldownWindow(cfg["name"], cfg["cooldown"])
+            cooldown_manager = CooldownManager(cooldown_window)
+
+            # ✅ 建立 TimerCore
             timer = self.timer_factory.create(
                 name=cfg["name"],
                 keys=cfg["keys"],
@@ -120,13 +131,13 @@ class MainWindow(QWidget):
             group_name = cfg["keys"].first_key or "none"
             timer.bind_group(group_name)
 
-            # ✅ 綁定管理器
-            timer.bind_group_manager(self.group_manager)
-            timer.bind_cooldown_manager(self.cooldown_manager)
-
-            # ✅ 啟用 debug 與狀態
-            timer.debug_mode = True
-            timer.enabled = True
+            # ✅ 一次性綁定所有管理器與狀態
+            timer.bind_managers(
+                group_manager=self.group_manager,
+                cooldown_manager=cooldown_manager,
+                debug=True,
+                enabled=True
+            )
 
             # ✅ 加入管理列表
             self.timers[cfg["name"]] = timer
