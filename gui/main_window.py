@@ -77,6 +77,9 @@ class MainWindow(QWidget):
         main_layout.addLayout(bottom_button_layout)
         main_layout.addWidget(self.label)
 
+        self.cooldown_manager.set_timer_cores(self.timers)
+        print(f"📦 self.timers 包含技能：{list(self.timers.keys())}")
+
         self.setLayout(main_layout)
         self.hotkey_listener = HotkeyListener(self.manager)
         self.hotkey_listener.start()
@@ -106,6 +109,8 @@ class MainWindow(QWidget):
                 callback=self.on_timer_triggered
             )
             self.timers[cfg["name"]] = timer
+
+        print(f"🧩 已建立 TimerCore：{list(self.timers.keys())}")
 
     def on_timer_triggered(self, name, remaining):
         print(f"✅ 技能「{name}」觸發，剩餘 {remaining} 秒")

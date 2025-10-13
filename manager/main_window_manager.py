@@ -16,7 +16,7 @@ class MainWindowManager:
         self.cooldown_manager = cooldown_manager
         self.timer_factory = TimerFactory(self.cooldown_manager)
         self.cooldown_positions = {}  # name → (x, y)
-        # self.cooldown_manager.set_timer_cores(self.timers)
+
 
     def toggle_timer(self, running: bool):
         for timer in self.timers.values():
@@ -88,6 +88,11 @@ class MainWindowManager:
                 cooldown=data["duration"],
                 callback=self.window.on_timer_triggered  # 如果你有 callback
             )
+            # 綁定 cooldown_manager
+            self.timers[name].bind_cooldown_manager(self.cooldown_manager)
+
+            # 建立冷卻視窗
+            self.cooldown_manager.add_timer(name, data["duration"])
 
     def validate_event_data(self, data):
         name = data.get("name", "").strip()

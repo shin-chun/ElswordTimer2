@@ -46,8 +46,14 @@ class TimerCore(QObject):
 
     def bind_cooldown_manager(self, cooldown_manager: Any):
         self.cooldown_manager = cooldown_manager
+        self.debug(f"🔗 TimerCore「{self.name}」已綁定 cooldown_manager")
 
     def check_key(self, key):
+        if self.cooldown_manager is None:
+            self.debug(f"❌ TimerCore「{self.name}」尚未綁定 cooldown_manager，忽略 key={key}")
+            print(f"🛑 check_key() 提早 return：{self.name}")
+            return
+
         if not self.enabled:
             self.debug(f"🚫 TimerCore「{self.name}」未啟動，忽略輸入 key={key}")
             return

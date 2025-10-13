@@ -167,6 +167,7 @@ class CooldownManager(QObject):
         self.timer_cores = timer_cores
         for core in self.timer_cores.values():
             core.bind_cooldown_manager(self)
+            print(f"🔗 已綁定 cooldown_manager 到 TimerCore「{core.name}」")
 
     def remove_timer(self, name: str):
         if name in self.windows:
