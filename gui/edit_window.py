@@ -145,11 +145,16 @@ class EditWindow(QDialog):
         """
 
     def get_event_data(self):
+        main_keys = [label.text() for label in self.key_labels[:3]]
+        sub_keys = [label.text() for label in self.key_labels[3:]]
+        group_name = main_keys[0] if main_keys[0] != "None" else "none"  # ✅ 推導群組名稱
+
         return {
             "name": self.event_name_input.text(),
-            "main_keys": [label.text() for label in self.key_labels[:3]],
-            "sub_keys": [label.text() for label in self.key_labels[3:]],
-            "duration": self.duration_input.value()
+            "main_keys": main_keys,
+            "sub_keys": sub_keys,
+            "duration": self.duration_input.value(),
+            "group": group_name  # ✅ 加入群組資訊
         }
 
     def save_event_data(self):

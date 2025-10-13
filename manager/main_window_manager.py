@@ -43,7 +43,8 @@ class MainWindowManager:
 
             window = self.cooldown_manager.get_window(name)
             if window:
-                self.cooldown_manager.set_state(name, CooldownState.SELECTED)
+                self.cooldown_manager.set_state(name, CooldownState.IDLE)
+                self.timers[name].bind_cooldown_manager(self.cooldown_manager)
                 window.show()
                 window.raise_()
                 print(f"🪄 技能「{name}」視窗已顯示")
@@ -61,7 +62,7 @@ class MainWindowManager:
 
     def start_all_timers(self):
         for name in self.timers:
-            self.cooldown_manager.start_timer(name, CooldownState.SELECTED)
+            self.cooldown_manager.start_timer(name, CooldownState.IDLE)
 
     def open_edit_window(self):
         dialog = self.create_window_factory(parent=self.window)  # 建立編輯視窗

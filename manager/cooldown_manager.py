@@ -2,6 +2,7 @@ from gui.cooldown_window import CooldownWindow, CooldownState
 from settings.common import *
 from timer.timer_core import TimerCore
 import threading
+from manager.group_state_manager import GroupStateManager
 
 
 class CooldownManager(QObject):
@@ -17,6 +18,7 @@ class CooldownManager(QObject):
         self.moveToThread(QApplication.instance().thread())
         self.start_timer_signal.connect(self.start_timer)
         self.setup_shortcuts()
+        self.group_manager = GroupStateManager()  # ✅ 新增群組管理器
 
         # 音效設置
 
@@ -167,6 +169,8 @@ class CooldownManager(QObject):
         self.timer_cores = timer_cores
         for core in self.timer_cores.values():
             core.bind_cooldown_manager(self)
+            core.bind_group_manager(self.group_manager)  # ✅ 注入群組管理器
+
             print(f"🔗 已綁定 cooldown_manager 到 TimerCore「{core.name}」")
 
     def remove_timer(self, name: str):

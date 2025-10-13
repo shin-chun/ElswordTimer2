@@ -1,36 +1,34 @@
-from PySide6.QtWidgets import QApplication, QPushButton, QVBoxLayout, QWidget, QLabel
-from PySide6.QtCore import QTimer
+from manager.group_state_manager import GroupStateManager
 
-class TimerWidget(QWidget):
-    def __init__(self):
-        super().__init__()
-        self.elapsed = 0
+def test_group_state_manager():
+    manager = GroupStateManager()
 
-        self.label = QLabel("Elapsed: 0s")
-        self.button = QPushButton("Start Timer")
-        self.button.clicked.connect(self.start_timer)
+    # 初始化三個 timer
+    timer1 = "timer1"
+    timer2 = "timer2"
+    timer3 = "timer3"
+    group = "a"
 
-        layout = QVBoxLayout()
-        layout.addWidget(self.label)
-        layout.addWidget(self.button)
-        self.setLayout(layout)
+    print("\n--- 初始狀態 ---")
+    assert manager.can_select(group, timer1)
+    manager.select(group, timer1)  # timer1 鎖定群組
 
-        self.timer = QTimer(self)
-        self.timer.setInterval(1000)
-        self.timer.timeout.connect(self.update_time)
+    print("\n--- timer2 嘗試選擇（應該 idle）---")
+    assert not manager.can_select(group, timer2)
+    assert manager.is_idle(group, timer2)
 
-    def start_timer(self):
-        if not self.timer.isActive():
-            self.timer.start()
-            self.button.setText("Timer Running...")
+    print("\n--- timer1 再次選擇（解除鎖定）---")
+    manager.select(group, timer1)  # 解除鎖定
 
-    def update_time(self):
-        self.elapsed += 1
-        self.label.setText(f"Elapsed: {self.elapsed}s")
+    print("\n--- timer2 再次嘗試選擇（應該成功）---")
+    assert manager.can_select(group, timer2)
+    manager.select(group, timer2)  # timer2 鎖定群組
+
+    print("\n--- timer3 在不同群組（應該不受影響）---")
+    assert manager.can_select("none", timer3)
+    manager.select("none", timer3)
+
+    print("\n✅ 測試完成，邏輯正確")
 
 if __name__ == "__main__":
-    app = QApplication([])
-    widget = TimerWidget()
-    widget.resize(300, 120)
-    widget.show()
-    app.exec()
+    test_group_state_manager()

@@ -1,0 +1,33 @@
+{
+  "events": [
+    {
+      "name": "1",
+      "main_keys": [
+        "a",
+        "b",
+        "c"
+      ],
+      "sub_keys": [
+        "None",
+        "None",
+        "None"
+      ],
+      "duration": 10
+    },
+    {
+      "name": "2",
+      "main_keys": [
+        "a",
+        "d",
+        "e"
+      ],
+      "sub_keys": [
+        "None",
+        "None",
+        "None"
+      ],
+      "duration": 10
+    }
+  ],
+  "positions": {}
+}

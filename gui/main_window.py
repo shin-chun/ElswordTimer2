@@ -6,6 +6,7 @@ from gui.edit_window import EditWindow
 from listen_hotkey.hotkey_listener import HotkeyListener
 from timer.timer_factory import TimerFactory
 from timer.timer_core import Keys, Keys2
+from manager.group_state_manager import GroupStateManager
 
 class MainWindow(QWidget):
     def __init__(self):
@@ -13,6 +14,7 @@ class MainWindow(QWidget):
         self.setWindowTitle("ElswordTimer")
         self.setGeometry(100, 100, 600, 450)
         self.timer_running = False  # 初始狀態：未啟動
+        self.group_manager = GroupStateManager()  # ✅ 新增群組管理器
 
         # ✅ 初始化 CooldownManager 與 TimerFactory
         self.cooldown_manager = CooldownManager(CooldownWindow)
@@ -21,6 +23,7 @@ class MainWindow(QWidget):
 
         # ✅ 建立技能 TimerCore 實例
         self.timers = {}
+        self.timer_cores = []  # ✅ 初始化 timer_cores
         self.init_timers()
 
         self.setStyleSheet("""
@@ -65,6 +68,7 @@ class MainWindow(QWidget):
             window=self,
             cooldown_manager=self.cooldown_manager,
         )
+
         # 綁定按鈕功能
         self.bind_button_actions()
 
@@ -100,6 +104,9 @@ class MainWindow(QWidget):
             }
         ]
 
+        self.timer_cores = []
+        self.timers = {}
+
         for cfg in configs:
             timer = self.timer_factory.create(
                 name=cfg["name"],
@@ -108,7 +115,26 @@ class MainWindow(QWidget):
                 cooldown=cfg["cooldown"],
                 callback=self.on_timer_triggered
             )
+
+            # ✅ 綁定群組（使用第一鍵作為群組名稱）
+            group_name = cfg["keys"].first_key or "none"
+            timer.bind_group(group_name)
+
+            # ✅ 綁定管理器
+            timer.bind_group_manager(self.group_manager)
+            timer.bind_cooldown_manager(self.cooldown_manager)
+
+            # ✅ 啟用 debug 與狀態
+            timer.debug_mode = True
+            timer.enabled = True
+
+            # ✅ 加入管理列表
             self.timers[cfg["name"]] = timer
+            self.timer_cores.append(timer)
+
+        # ✅ 所有 TimerCore 建立完後，統一綁定 all_timers
+        for timer in self.timer_cores:
+            timer.bind_all_timers(self.timer_cores)
 
         print(f"🧩 已建立 TimerCore：{list(self.timers.keys())}")
 
