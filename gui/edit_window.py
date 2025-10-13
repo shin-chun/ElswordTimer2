@@ -172,12 +172,3 @@ class EditWindow(QDialog):
     def update_label(self, index, key_name):
         self.key_labels[index].setText(key_name)
 
-    def eventFilter(self, obj, event):
-        if event.type() == QEvent.Type.KeyPress:
-            if self.manager.recording_index is None:
-                return False
-            if self.manager.handle_special_key(event):
-                return True
-            self.manager.keyPressEvent(event)
-            return True
-        return super().eventFilter(obj, event)

@@ -2,7 +2,7 @@ from settings.common import *
 from enum import Enum
 from dataclasses import dataclass
 from gui.cooldown_window import CooldownState
-from manager.cooldown_manager import CooldownManager
+from typing import Any
 
 
 @dataclass
@@ -26,7 +26,7 @@ class TimerState(Enum):
 
 
 class TimerCore(QObject):
-    def __init__(self, name, keys: Keys, keys2: Keys2, cooldown, cooldown_manager: CooldownManager, callback=None):
+    def __init__(self, name, keys: Keys, keys2: Keys2, cooldown, callback=None):
         super().__init__()
         self.name = name
         self.keys = keys
@@ -38,37 +38,57 @@ class TimerCore(QObject):
         self.active = False
         self.debug_mode = False
         self.manager = None
-        self.cooldown_manager = cooldown_manager
+        self.cooldown_manager = None  # 延遲注入
+        self.enabled = False
 
-    def bind_manager(self, manager: CooldownManager):
+    def bind_manager(self, manager: Any):
         self.manager = manager
 
+    def bind_cooldown_manager(self, cooldown_manager: Any):
+        self.cooldown_manager = cooldown_manager
+
     def check_key(self, key):
-        if self.match_sequence(self.keys, key) or self.match_sequence(self.keys2, key):
-            self.state = TimerState.ACTIVE
-            self.manager.start_timer_signal.emit(self.name, CooldownState.TRIGGERED)
+        if not self.enabled:
+            self.debug(f"🚫 TimerCore「{self.name}」未啟動，忽略輸入 key={key}")
+            return
 
-    def match_sequence(self, keys_obj, key):
-        if keys_obj.third_key == key and not keys_obj.first_key and not keys_obj.second_key:
-            return True
+        if self.state == TimerState.ACTIVE:
+            self.debug(f"⏳ 技能「{self.name}」冷卻中，忽略輸入 key={key}")
+            return
 
-        if key == keys_obj.first_key:
+        result = self.match_sequence(self.keys, key) or self.match_sequence(self.keys2, key)
+        if not result:
+            self.debug(f"❓ 技能「{self.name}」未匹配 key={key}，忽略")
+            return
+
+        if result == "SELECT":
             self.state = TimerState.SELECT
             self.cooldown_manager.set_state(self.name, CooldownState.SELECTED)
-        elif self.state == TimerState.SELECT and key == keys_obj.second_key:
+            self.debug(f"🧊 技能「{self.name}」進入選擇狀態 key={key}")
+        elif result == "LOCK":
             self.state = TimerState.LOCK
             self.cooldown_manager.set_state(self.name, CooldownState.LOCKED)
+            self.debug(f"🔒 技能「{self.name}」進入鎖定狀態 key={key}")
+        elif result == "TRIGGER":
+            if not self.manager.has_timer(self.name):
+                self.debug(f"⚠️ 技能「{self.name}」尚未建立冷卻視窗，略過觸發 key={key}")
+                return
+            self.state = TimerState.ACTIVE
+            self.manager.start_timer_signal.emit(self.name, CooldownState.TRIGGERED)
+            self.debug(f"🔥 技能「{self.name}」冷卻觸發 key={key}")
+
+    def match_sequence(self, keys_obj, key) -> str | None:
+        if keys_obj.third_key == key and not keys_obj.first_key and not keys_obj.second_key:
+            return "TRIGGER"
+
+        if key == keys_obj.first_key:
+            return "SELECT"
+        elif self.state == TimerState.SELECT and key == keys_obj.second_key:
+            return "LOCK"
         elif self.state == TimerState.LOCK and key == keys_obj.third_key:
-            return True
+            return "TRIGGER"
 
-        return False
-
-    # def start_countdown(self):
-    #     print(f"🚀 觸發技能：{self.name}，倒數 {self.cooldown} 秒")
-    #     self.remaining = self.cooldown
-    #     self.manager.start_timer(self.name, self.state)
-    #     if self.callback:
-    #         self.callback(self.name, self.remaining)
+        return None
 
     def update_config(self, keys: Keys, keys2: Keys2, cooldown: int):
         self.keys = keys
@@ -96,15 +116,3 @@ class TimerCore(QObject):
         self.active = False
         print(f"🛑 TimerCore「{self.name}」已停止偵測")
 
-# app = QCoreApplication(sys.argv)
-# keys_obj = TimerCore(
-#     name='test_trigger',
-#     keys=Keys('a', 'b', 'c'),
-#     keys2=Keys2('d', 'e', 'f'),
-#     cooldown=5
-# )
-#
-# core_a = [ 'a', 'b', 'd', 'e', 'f', 'e', 'c']
-# for k in core_a:
-#     print(f'現在輸入：{k}')
-#     time.sleep(0.5)

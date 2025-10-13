@@ -8,44 +8,51 @@ class HotkeyListener:
         self.running = False
 
     def start(self):
-        if not self.running:
-            self.running = True
-            self.listener = keyboard.Listener(on_press=self.on_press)
-            thread = Thread(target=self.listener.start, daemon=True)
-            thread.start()
+        if self.running:
+            return
+        self.running = True
+        self.listener = keyboard.Listener(on_press=self.on_press)
+        thread = Thread(target=self.listener.start, daemon=True)
+        thread.start()
+        print("🎧 HotkeyListener 已啟動")
 
     def stop(self):
         self.running = False
         if self.listener:
             self.listener.stop()
+            self.listener = None
+            print("🛑 HotkeyListener 已停止")
 
     def on_press(self, key):
         if not self.running:
             return
 
         try:
-            if isinstance(key, keyboard.Key):
-                # 處理特殊鍵（例如左右 Ctrl）
-                if key == keyboard.Key.ctrl_l:
-                    key_name = "Left Ctrl"
-                elif key == keyboard.Key.ctrl_r:
-                    key_name = "Right Ctrl"
-                elif key == keyboard.Key.shift_l:
-                    key_name = "Left Shift"
-                elif key == keyboard.Key.shift_r:
-                    key_name = "Right Shift"
-                elif key == keyboard.Key.alt_l:
-                    key_name = "Left Alt"
-                elif key == keyboard.Key.alt_r:
-                    key_name = "Right Alt"
-                else:
-                    key_name = key.name.upper()
-            else:
-                # 處理一般字母或數字鍵
-                key_name = str(key).replace("'", "").upper()
-
+            key_name = self.resolve_key_name(key)
             print(f"🎹 鍵盤輸入：{key_name}")
             self.timer_manager.input_key(key_name)
-
         except Exception as e:
             print(f"❌ 鍵盤監聽錯誤：{e}")
+
+    def resolve_key_name(self, key):
+        if isinstance(key, keyboard.Key):
+            mapping = {
+                keyboard.Key.ctrl_l: "Left Ctrl",
+                keyboard.Key.ctrl_r: "Right Ctrl",
+                keyboard.Key.shift_l: "Left Shift",
+                keyboard.Key.shift_r: "Right Shift",
+                keyboard.Key.alt_l: "Left Alt",
+                keyboard.Key.alt_r: "Right Alt",
+                keyboard.Key.enter: "Enter",
+                keyboard.Key.space: "Space",
+                keyboard.Key.esc: "Esc",
+                keyboard.Key.tab: "Tab",
+                keyboard.Key.backspace: "Backspace",
+                keyboard.Key.up: "Up Arrow",
+                keyboard.Key.down: "Down Arrow",
+                keyboard.Key.left: "Left Arrow",
+                keyboard.Key.right: "Right Arrow",
+            }
+            return mapping.get(key, key.name)
+        else:
+            return str(key).replace("'", "")

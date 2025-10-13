@@ -4,16 +4,57 @@
       "name": "影子",
       "main_keys": [
         "Right Shift",
-        "LEFT",
+        "Left Arrow",
         "Left Ctrl"
       ],
       "sub_keys": [
         "Right Shift",
-        "LEFT",
+        "Left Arrow",
         "Left Alt"
       ],
       "duration": 60
+    },
+    {
+      "name": "百鬼",
+      "main_keys": [
+        "Right Shift",
+        "Down Arrow",
+        "w"
+      ],
+      "sub_keys": [
+        "Right Shift",
+        "Down Arrow",
+        "e"
+      ],
+      "duration": 25
+    },
+    {
+      "name": "餘暉",
+      "main_keys": [
+        "Right Shift",
+        "Up Arrow",
+        "Left Ctrl"
+      ],
+      "sub_keys": [
+        "Right Shift",
+        "Up Arrow",
+        "a"
+      ],
+      "duration": 30
     }
   ],
-  "positions": {}
+  "positions": {
+    "影子": [
+      1499,
+      949
+    ],
+    "百鬼": [
+      1692,
+      899
+    ],
+    "餘暉": [
+      1490,
+      897
+    ]
+  }
 }

@@ -150,7 +150,7 @@ class MainWindow(QWidget):
             self.handle_create_timer,
             self.manager.edit_timer,
             self.manager.save_file,
-            self.manager.delete_timer,
+            self.manager.delete_timer_by_name_from_selection,  # ✅ 修正這行,
             self.manager.reset_timer,
             self.manager.import_config_via_dialog
         ]
@@ -174,5 +174,14 @@ class MainWindow(QWidget):
         else:
             self.bottom_button.setText("啟動計時器")
             self.label.setText("計時器已停止")
+
+    def closeEvent(self, event):
+        self.cooldown_manager.close_all_windows()
+        # self.save_config_on_exit()
+        event.accept()
+
+    def save_config_on_exit(self):
+        self.manager.save_file_to_path("event_data.json")
+
 
 

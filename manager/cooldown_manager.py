@@ -1,5 +1,7 @@
 from gui.cooldown_window import CooldownWindow, CooldownState
 from settings.common import *
+from timer.timer_core import TimerCore
+import threading
 
 
 class CooldownManager(QObject):
@@ -7,15 +9,16 @@ class CooldownManager(QObject):
 
     def __init__(self, CooldownWindowClass):
         super().__init__()
+        self.timer_cores: dict[str, TimerCore] = {}
         self.state = None
         self.CooldownWindowClass = CooldownWindowClass
         self.windows: dict[str, CooldownWindow] = {}
         self._timer: dict[str, QTimer] = {}
         self.moveToThread(QApplication.instance().thread())
         self.start_timer_signal.connect(self.start_timer)
-        # self.cooldown_manager = CooldownManager(CooldownWindow)
-
         self.setup_shortcuts()
+
+        # 音效設置
 
     def add_timer(self, skill_name: str, cooldown_seconds: int, position=(300, 300)):
         if skill_name in self.windows:
@@ -27,6 +30,10 @@ class CooldownManager(QObject):
         self.windows[skill_name] = window
 
     def start_timer(self, skill_name: str, state: CooldownState):
+        window = self.get_window(skill_name)
+        if not window:
+            print(f"❌ 無法啟動技能「{skill_name}」，視窗不存在，略過啟動")
+            return
         # 確保此方法在主執行緒執行
         if QThread.currentThread() != self.thread():
             # print(f"⚠️ 非主執行緒，透過 signal 轉移 start_timer({skill_name})")
@@ -81,6 +88,15 @@ class CooldownManager(QObject):
             del self._timer[skill_name]
             window.set_state(CooldownState.IDLE)
 
+            # ✅ 播放音效（用 thread 避免卡住 UI）
+            threading.Thread(target=self._play_sound, daemon=True).start()
+
+    def _play_sound(self):
+        try:
+            playsound("assets/sound/cooldown_complete.mp3")
+        except Exception as e:
+            print(f"❌ 播放音效失敗：{e}")
+
     def reset_timer(self, skill_name: str, duration: int = None):
         window = self.windows.get(skill_name)
         if not window:
@@ -95,15 +111,6 @@ class CooldownManager(QObject):
             self._timer[skill_name].stop()
             self._timer[skill_name].deleteLater()
             del self._timer[skill_name]
-
-    def remove_timer(self, skill_name: str):
-        if skill_name in self._timer:
-            self._timer[skill_name].stop()
-            self._timer[skill_name].deleteLater()
-            del self._timer[skill_name]
-        if skill_name in self.windows:
-            self.windows[skill_name].close()
-            del self.windows[skill_name]
 
     def has_timer(self, skill_name: str) -> bool:
         return skill_name in self.windows
@@ -121,8 +128,12 @@ class CooldownManager(QObject):
         pass  # 可選擇即時更新或透過 callback 傳回
 
     def set_state(self, skill_name: str, state: CooldownState):
-        if skill_name in self.windows:
-            self.windows[skill_name].set_state(state)
+        print(skill_name, state)
+        window = self.get_window(skill_name)
+        if window:
+            window.set_state(state)
+        else:
+            print(f"⚠️ 無法設定技能「{skill_name}」狀態，視窗不存在")
 
     def reset_all_cooldowns(self):
         print("🔄 F8 快捷鍵觸發：重置所有冷卻視窗")
@@ -136,9 +147,34 @@ class CooldownManager(QObject):
                 self._timer[skill_name].deleteLater()
                 del self._timer[skill_name]
 
+            # 重置 TimerCore 狀態
+            if skill_name in self.timer_cores:
+                self.timer_cores[skill_name].reset()
+
             print(f"✅ 已重置：{skill_name}")
 
     def setup_shortcuts(self):
         reset_shortcut = QShortcut(QKeySequence("F8"), self)
         reset_shortcut.setContext(Qt.ShortcutContext.ApplicationShortcut)
         reset_shortcut.activated.connect(self.reset_all_cooldowns)
+
+    def close_all_windows(self):
+        for window in self.windows.values():
+            window.close()
+        print("🛑 所有冷卻視窗已關閉")
+
+    def set_timer_cores(self, timer_cores: dict[str, TimerCore]):
+        self.timer_cores = timer_cores
+        for core in self.timer_cores.values():
+            core.bind_cooldown_manager(self)
+
+    def remove_timer(self, name: str):
+        if name in self.windows:
+            self.windows[name].close()
+            del self.windows[name]
+        if name in self._timer:
+            self._timer[name].stop()
+            self._timer[name].deleteLater()
+            del self._timer[name]
+        if name in self.timer_cores:
+            del self.timer_cores[name]

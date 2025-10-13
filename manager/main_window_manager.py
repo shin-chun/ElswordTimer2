@@ -1,7 +1,7 @@
 from settings.common import *
 from gui.cooldown_window import CooldownState
 from gui.edit_window import EditWindow
-from timer.timer_core import Keys, Keys2
+from timer.timer_core import Keys, Keys2, TimerCore
 from timer.timer_factory import TimerFactory
 from manager.cooldown_manager import CooldownManager
 
@@ -10,14 +10,18 @@ class MainWindowManager:
     def __init__(self, create_window_factory, event_list_widget, window, cooldown_manager):
         self.create_window_factory = create_window_factory
         self.list_widget = event_list_widget
-        self.timers = {}
+        self.timers: dict[str, TimerCore] = {}
         self.window = window
         self.event_data_list = []  # 儲存每個事件的 dict
         self.cooldown_manager = cooldown_manager
         self.timer_factory = TimerFactory(self.cooldown_manager)
         self.cooldown_positions = {}  # name → (x, y)
+        # self.cooldown_manager.set_timer_cores(self.timers)
 
     def toggle_timer(self, running: bool):
+        for timer in self.timers.values():
+            timer.enabled = running  # ✅ 修正錯誤：使用 running 而不是未定義的 enabled
+
         if running:
             self.show_all_cooldown_windows()
             print("✅ 已呼叫 show_all_cooldown_windows()")
@@ -28,16 +32,31 @@ class MainWindowManager:
 
     def show_all_cooldown_windows(self):
         print(f"✅ timers 內容：{list(self.timers.keys())}")
+
         for name in self.timers:
+            self.timers[name].reset()
+
             if not self.cooldown_manager.has_timer(name):
                 position = self.cooldown_positions.get(name, (300, 300))
-                self.cooldown_manager.add_timer(name, self.timers[name].cooldown, position=position)
-            self.cooldown_manager.set_state(name, CooldownState.SELECTED)
-            self.cooldown_manager.get_window(name).show()
+                cooldown = getattr(self.timers[name], "cooldown", 5)
+                self.cooldown_manager.add_timer(name, cooldown, position=position)
+
+            window = self.cooldown_manager.get_window(name)
+            if window:
+                self.cooldown_manager.set_state(name, CooldownState.SELECTED)
+                window.show()
+                window.raise_()
+                print(f"🪄 技能「{name}」視窗已顯示")
+            else:
+                print(f"⚠️ 技能「{name}」尚未建立視窗，略過顯示")
+
+        print(f"🎯 共顯示 {len(self.timers)} 個冷卻視窗")
 
     def stop_all_timers_and_close_windows(self):
         for name, timer in self.timers.items():
             timer.stop_detection()
+            timer.reset()  # ✅ 清除狀態與剩餘時間
+
             self.cooldown_manager.remove_timer(name)
 
     def start_all_timers(self):
@@ -143,24 +162,26 @@ class MainWindowManager:
         except Exception as e:
             print(f"儲存失敗：{e}")
 
-    def delete_timer(self):
+    def delete_timer_by_name_from_selection(self):
         current_row = self.list_widget.currentRow()
         if current_row == -1:
-            return  # 沒有選取項目就不處理
-
-        reply = QMessageBox.question(
-            self.list_widget,
-            "確認刪除",
-            "確定要刪除這個計時器嗎？",
-            QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
-        )
-        if reply == QMessageBox.StandardButton.No:
             return
-        # 刪除列表項目
+
+        skill_name = self.event_data_list[current_row]["name"]
+        self.delete_timer_by_name(skill_name)
+
+        # ✅ 同步刪除 UI 與資料
         self.list_widget.takeItem(current_row)
-        # 刪除對應資料
-        if current_row < len(self.event_data_list):
-            del self.event_data_list[current_row]
+        del self.event_data_list[current_row]
+
+    def delete_timer_by_name(self, name: str):
+        if name in self.timers:
+            del self.timers[name]
+        self.cooldown_manager.remove_timer(name)
+        if name in self.cooldown_positions:
+            del self.cooldown_positions[name]
+        print(f"🗑️ 已從 MainWindowManager 刪除技能：{name}")
+
 
     def import_config_via_dialog(self):
         filepath, _ = QFileDialog.getOpenFileName(
@@ -247,4 +268,20 @@ class MainWindowManager:
 
     def input_key(self, key: str):
         for timer in self.timers.values():
-            timer.check_key(key)
+            if timer.enabled:
+                try:
+                    timer.check_key(key)
+                except Exception as e:
+                    print(f"❌ 技能觸發錯誤：{e}")
+
+    def save_file_to_path(self, filepath):
+        save_data = {
+            "events": self.event_data_list,
+            "positions": self.cooldown_positions
+        }
+        try:
+            with open(filepath, "w", encoding="utf-8") as f:
+                json.dump(save_data, f, ensure_ascii=False, indent=2)
+            print(f"📝 已儲存設定到 {filepath}")
+        except Exception as e:
+            print(f"❌ 儲存失敗：{e}")
